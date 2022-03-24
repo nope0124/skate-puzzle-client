@@ -5,14 +5,13 @@ using UnityEngine.SceneManagement;
 
 public class ButtonManager : MonoBehaviour
 {
-    public int argStageNumber { get; set; }
+    public int argStageId { get; set; }
     public int argDifficulty { get; set; }
 
     public void OnClickStageSelectButton()
     {
-        Debug.Log(argStageNumber);
-        new MainManager().SetStageNumber(argStageNumber);
-        new MainManager().SetDifficulty(argDifficulty);
+        new MainManager().SetCurrentStageId(argStageId);
+        new MainManager().SetCurrentDifficulty(argDifficulty);
         SceneManager.LoadScene("Main");
     }
 }

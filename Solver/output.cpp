@@ -11,7 +11,7 @@ int main() {
   while(cin >> S) {
     int N = S.size();
     cout << "    new char[] {";
-    rep(i, N) cout << "'" << S[i] << ", ";
+    rep(i, N) cout << "'" << S[i] << "', ";
     cout << "}," << "\n";
   }
   cout << "}," << "\n";

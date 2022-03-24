@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.SceneManagement;
+using GoogleMobileAds.Api;
 
 public class MainManager : MonoBehaviour
 {
@@ -11,28 +12,47 @@ public class MainManager : MonoBehaviour
     int[] dy = {0, 0, 1, -1};
     float EPS = 1e-5f;
 
+    private BannerView defaultBannerView;
+    private BannerView pauseBannerView;
+
     [SerializeField] TileBase iceWall;
     [SerializeField] TileBase iceFloor;
     [SerializeField] TileBase iceBlock;
     [SerializeField] TileBase snowBall;
     // [SerializeField] TileBase soilFloor;
     [SerializeField] TileBase goalFloor;
-    [SerializeField] Tilemap stageBoard;
+    [SerializeField] GameObject stageBoardPrefab;
     [SerializeField] GameObject player;
-    [SerializeField] GameObject clearUI;
-    static int stageNumber;
-    static int difficulty;
-    int startXOnBoard, startYOnBoard, goalXOnBoard, goalYOnBoard;
-    float startX, startY, goalX, goalY;
+    
+    [SerializeField] GameObject gridLayer;
+    [SerializeField] GameObject backgroundLayer;
+    [SerializeField] GameObject unitLayer;
+    [SerializeField] GameObject UILayer;
+    [SerializeField] GameObject buttonLayer;
+    [SerializeField] GameObject effectLayer;
+
+    [SerializeField] GameObject pausePanel;
+    [SerializeField] GameObject clearPanel;
+
+
+    Tilemap stageBoard;
+    static int currentDifficulty = 0;
+    const int difficultyNumber = 3;
+    static int currentStageId = 0;
+    const int stageNumber = 15;
+
+    int startPointXOnBoard, startPointYOnBoard, goalPointXOnBoard, goalPointYOnBoard;
+    float startPointX, startPointY, goalPointX, goalPointY;
     int currentPlayerXOnBoard, currentPlayerYOnBoard;
     float currentPlayerX, currentPlayerY;
-    float boardScale;
-    float screenSize = 5.0f;
-    char[][] boardArray;
-    char[][] currentBoardArray;
+    float stageBoardWidthCenter = 0.0f;
+    float stageBoardHeightCenter = 0.5f;
+    float stageBoardWidth, stageBoardHeight;
+    float screenScale = 5.0f;
+    char[][] stageBoardGrid, currentStageBoardGrid;
 
     // 基本的に長さは同じ
-    int boardLengthX, boardLengthY;
+    int stageBoardGridWidth, stageBoardGridHeight;
 
     bool isFinish = false;
     bool reachedSnowBall = false;
@@ -41,24 +61,77 @@ public class MainManager : MonoBehaviour
     Vector3 goalPosition;
     Vector3Int snowBallPosition;
     [SerializeField] float moveSpeed = 1.0f;
+    bool clearFlag = false;
+
+
+    void requestDefaultBanner()
+    {
+        #if UNITY_IOS
+            string adUnitId = AdmobVariable.getIPHONE_DEFAULT_BANNER();
+        #else
+            string adUnitId = "unexpected_platform";
+        #endif
+
+        defaultBannerView = new BannerView(adUnitId, AdSize.IABBanner, AdPosition.Bottom);
+        AdRequest request = new AdRequest.Builder().Build();
+
+        MobileAds.Initialize(initStatus => { });
+        defaultBannerView.LoadAd(request);
+    }
+
+    void requestPauseBanner()
+    {
+        #if UNITY_IOS
+            string adUnitId = AdmobVariable.getIPHONE_PAUSE_BANNER();
+        #else
+            string adUnitId = "unexpected_platform";
+        #endif
+
+        pauseBannerView = new BannerView(adUnitId, AdSize.MediumRectangle, AdPosition.Center);
+        AdRequest request = new AdRequest.Builder().Build();
+
+        MobileAds.Initialize(initStatus => { });
+        pauseBannerView.LoadAd(request);
+    }
+
+
 
     void init() {
 
+        Time.timeScale = 1.0f;
+        clearFlag = false;
+
+        // 盤面のタイルマップをリセット
+        Destroy(GameObject.Find("StageBoard(Clone)"));
+        stageBoard = Instantiate(stageBoardPrefab, new Vector3(0.0f, 0.0f, 0.0f), Quaternion.identity).GetComponent<Tilemap>();
+        stageBoard.transform.SetParent(gridLayer.transform, false);
+
+        // 盤面のサイズを取得
+        stageBoardGrid = new Board().GetBoard(currentDifficulty, currentStageId);
+        stageBoardGridWidth = stageBoardGrid[0].Length;
+        stageBoardGridHeight = stageBoardGrid.Length;
+        stageBoardWidth = screenScale/stageBoardGridWidth;
+        stageBoardHeight = screenScale/stageBoardGridHeight;
+
+        // 盤面のサイズを調整
+        stageBoard.GetComponent<Transform>().position = new Vector3(-stageBoardGridWidth*stageBoardWidth/2.0f+stageBoardWidthCenter, -stageBoardGridHeight*stageBoardHeight/2.0f+stageBoardHeightCenter, 0.0f);
+        stageBoard.GetComponent<Transform>().localScale = new Vector3(stageBoardWidth, stageBoardHeight, 0.0f);
+
         // 盤面の状態をコピー // ディープコピーの方法がわからない
-        currentBoardArray = new char[boardLengthY][];
-        for(int i = 0; i < boardLengthY; i++) currentBoardArray[i] = new char[boardLengthX];
-        for(int i = 0; i < boardLengthY; i++) {
-            for(int j = 0; j < boardLengthX; j++) {
-                currentBoardArray[i][j] = boardArray[i][j];
+        currentStageBoardGrid = new char[stageBoardGridHeight][];
+        for(int i = 0; i < stageBoardGridHeight; i++) currentStageBoardGrid[i] = new char[stageBoardGridWidth];
+        for(int i = 0; i < stageBoardGridHeight; i++) {
+            for(int j = 0; j < stageBoardGridWidth; j++) {
+                currentStageBoardGrid[i][j] = stageBoardGrid[i][j];
             }
         }
 
 
         // 盤面の状態を反映
-        for(int i = 0; i < boardLengthY; i++) {
-            for(int j = 0; j < boardLengthX; j++) {
+        for(int i = 0; i < stageBoardGridHeight; i++) {
+            for(int j = 0; j < stageBoardGridWidth; j++) {
                 Vector3Int grid = new Vector3Int(j, i, 0);
-                switch(boardArray[i][j]) {
+                switch(stageBoardGrid[i][j]) {
                     case '#':
                         stageBoard.SetTile(grid, iceWall);
                         break;
@@ -72,17 +145,17 @@ public class MainManager : MonoBehaviour
                         stageBoard.SetTile(grid, snowBall);
                         break;
                     case 'S':
-                        startX = stageBoard.CellToWorld(grid).x;
-                        startY = stageBoard.CellToWorld(grid).y;
-                        startXOnBoard = j;
-                        startYOnBoard = i;
+                        startPointX = stageBoard.CellToWorld(grid).x;
+                        startPointY = stageBoard.CellToWorld(grid).y;
+                        startPointXOnBoard = j;
+                        startPointYOnBoard = i;
                         break;
                     case 'G':
                         stageBoard.SetTile(grid, goalFloor);
-                        goalX = stageBoard.CellToWorld(grid).x;
-                        goalY = stageBoard.CellToWorld(grid).y;
-                        goalXOnBoard = j;
-                        goalYOnBoard = i;
+                        goalPointX = stageBoard.CellToWorld(grid).x;
+                        goalPointY = stageBoard.CellToWorld(grid).y;
+                        goalPointXOnBoard = j;
+                        goalPointYOnBoard = i;
                         break;
                     default:
                         break;
@@ -92,46 +165,46 @@ public class MainManager : MonoBehaviour
 
 
         // プレイヤー位置の初期化
-        player.transform.position = new Vector3(startX+boardScale/2.0f, startY+boardScale/2.0f, 0.0f);
-        currentPlayerX = startX; currentPlayerXOnBoard = startXOnBoard;
-        currentPlayerY = startY; currentPlayerYOnBoard = startYOnBoard;
-        player.transform.localScale = new Vector3(boardScale, boardScale, 1.0f);
-        targetPosition = new Vector3(currentPlayerX+boardScale/2.0f, currentPlayerY+boardScale/2.0f, 0.0f);
-        goalPosition = new Vector3(goalX+boardScale/2.0f, goalY+boardScale/2.0f, 0.0f);
+        player.transform.position = new Vector3(startPointX+stageBoardWidth/2.0f, startPointY+stageBoardHeight/2.0f, 0.0f);
+        currentPlayerX = startPointX; currentPlayerXOnBoard = startPointXOnBoard;
+        currentPlayerY = startPointY; currentPlayerYOnBoard = startPointYOnBoard;
+        player.transform.localScale = new Vector3(stageBoardWidth, stageBoardHeight, 1.0f);
+        targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
+        goalPosition = new Vector3(goalPointX+stageBoardWidth/2.0f, goalPointY+stageBoardHeight/2.0f, 0.0f);
 
         // その他変数を初期化
         isFinish = false;
         reachedSnowBall = false;
-        clearUI.SetActive(false);
+        pausePanel.SetActive(false);
+        clearPanel.SetActive(false);
     }
 
     void Start()
     {
+        // 広告の生成
+        requestDefaultBanner();
+        
         // 盤面のサイズを取得
-        boardArray = new Board().GetBoard(difficulty, stageNumber);
-        boardLengthX = boardArray[0].Length;
-        boardLengthY = boardArray.Length;
-        boardScale = screenSize/boardLengthX;
-
         // 盤面のサイズを調整
-        stageBoard.GetComponent<Transform>().position = new Vector3(-boardLengthX*boardScale/2.0f, -boardLengthY*boardScale/2.0f, 0.0f);
-        stageBoard.GetComponent<Transform>().localScale = new Vector3(boardScale, boardScale, 0.0f);
-
         // 盤面の状態をコピー
         // 盤面の状態を取得
         // プレイヤー位置の初期化
         init();
+        
     }
 
 
     void Update()
     {
 
-
         if(isFinish && (player.transform.position - goalPosition).magnitude <= EPS) {
-            clearUI.SetActive(true);
-            string stageName = "StageScore" + difficulty.ToString() + "_" + stageNumber.ToString();
-            PlayerPrefs.SetInt(stageName, 1);
+            if(clearFlag == false) {
+                requestPauseBanner();
+                clearPanel.SetActive(true);
+                string stageName = "StageScore" + currentDifficulty.ToString() + "_" + currentStageId.ToString();
+                PlayerPrefs.SetInt(stageName, 1);
+                clearFlag = true;
+            }
         }else if(reachedSnowBall && (player.transform.position - targetPosition).magnitude <= EPS) {
             reachedSnowBall = false;
             stageBoard.SetTile(snowBallPosition, iceFloor);
@@ -151,15 +224,15 @@ public class MainManager : MonoBehaviour
         while(true) {
             int nx = currentPlayerXOnBoard + dx[i];
             int ny = currentPlayerYOnBoard + dy[i];
-            if(nx < 0 || ny < 0 || nx >= boardLengthX || ny >= boardLengthY) break;
-            if(currentBoardArray[ny][nx] == '#' || currentBoardArray[ny][nx] == 'x') break;
-            if(currentBoardArray[ny][nx] == '@') {
-                currentBoardArray[ny][nx] = '.';
+            if(nx < 0 || ny < 0 || nx >= stageBoardGridWidth || ny >= stageBoardGridHeight) break;
+            if(currentStageBoardGrid[ny][nx] == '#' || currentStageBoardGrid[ny][nx] == 'x') break;
+            if(currentStageBoardGrid[ny][nx] == '@') {
+                currentStageBoardGrid[ny][nx] = '.';
                 snowBallPosition = new Vector3Int(nx, ny, 0);
                 reachedSnowBall = true;
                 break;
             }
-            if(currentBoardArray[ny][nx] == 'S' || currentBoardArray[ny][nx] == 'G' || currentBoardArray[ny][nx] == 'o') {
+            if(currentStageBoardGrid[ny][nx] == 'S' || currentStageBoardGrid[ny][nx] == 'G' || currentStageBoardGrid[ny][nx] == 'o') {
                 currentPlayerXOnBoard += dx[i];
                 currentPlayerYOnBoard += dy[i];
                 break;
@@ -172,53 +245,60 @@ public class MainManager : MonoBehaviour
         Vector3Int grid = new Vector3Int(currentPlayerXOnBoard, currentPlayerYOnBoard, 0);
         currentPlayerX = stageBoard.CellToWorld(grid).x;
         currentPlayerY = stageBoard.CellToWorld(grid).y;
-        targetPosition = new Vector3(currentPlayerX+boardScale/2.0f, currentPlayerY+boardScale/2.0f, 0.0f);
+        targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
 
         // もし到着場所がゴールならFinishフラグを立てる
-        if(goalXOnBoard == currentPlayerXOnBoard && goalYOnBoard == currentPlayerYOnBoard) isFinish = true;
+        if(goalPointXOnBoard == currentPlayerXOnBoard && goalPointYOnBoard == currentPlayerYOnBoard) isFinish = true;
     }
 
-    public void OnClickLeftButton() {
+    public void OnClickMoveButton(int i) {
         if((player.transform.position - targetPosition).magnitude > EPS) return;
         if(isFinish) return;
         if(reachedSnowBall) return;
-        movePlayer(0);
+        movePlayer(i);
     }
 
-    public void OnClickRightButton() {
-        if((player.transform.position - targetPosition).magnitude > EPS) return;
+    public void OnClickPauseButton() {
         if(isFinish) return;
-        if(reachedSnowBall) return;
-        movePlayer(1);
-    }
-
-    public void OnClickUpButton() {
-        if((player.transform.position - targetPosition).magnitude > EPS) return;
-        if(isFinish) return;
-        if(reachedSnowBall) return;
-        movePlayer(2);
-    }
-
-    public void OnClickDownButton() {
-        if((player.transform.position - targetPosition).magnitude > EPS) return;
-        if(isFinish) return;
-        if(reachedSnowBall) return;
-        movePlayer(3);
-    }
-
-    public void OnClickResetButton() {
-        init();
+        requestPauseBanner();
+        if (!pausePanel.activeSelf) {
+            pausePanel.SetActive(true);
+            Time.timeScale = 0.0f;
+        }
     }
 
     public void OnClickBackButton() {
+        defaultBannerView.Destroy();
+        pauseBannerView.Destroy();
         SceneManager.LoadScene("StageSelect");
     }
 
-    public void SetStageNumber(int argStageNumber) {
-        stageNumber = argStageNumber;
+    public void OnClickRetryButton() {
+        init();
+        pausePanel.SetActive(false);
+        pauseBannerView.Destroy();
+        Time.timeScale = 1.0f;
     }
 
-    public void SetDifficulty(int argDifficulty) {
-        difficulty = argDifficulty;
+    public void OnClickPlayButton() {
+        pausePanel.SetActive(false);
+        pauseBannerView.Destroy();
+        Time.timeScale = 1.0f;
+    }
+
+    public void OnClickNextButton() {
+        currentDifficulty = (currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber;
+        currentStageId = (currentStageId+1) % stageNumber;
+        init();
+        pauseBannerView.Destroy();
+    }
+
+
+    public void SetCurrentStageId(int argStageId) {
+        currentStageId = argStageId;
+    }
+
+    public void SetCurrentDifficulty(int argDifficulty) {
+        currentDifficulty = argDifficulty;
     }
 }

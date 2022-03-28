@@ -14,7 +14,7 @@ public class StageSelectManager : MonoBehaviour
     static int currentStageId = 0;
     const int stageNumber = 15;
 
-    const int stageSelectWidth = 400;
+    const int stageSelectWidth = 350;
     const int stageSelectHeight = 300;
     const int stageSelectWidthCenter = 0;
     const int stageSelectHeightCenter = 30;
@@ -39,8 +39,22 @@ public class StageSelectManager : MonoBehaviour
     [SerializeField] GameObject buttonLayer;
     [SerializeField] GameObject effectLayer;
 
+    [SerializeField] AudioSource audioSource;
+    [SerializeField] AudioSource decisionSoundEffect;
+
+    [SerializeField] Sprite muteBGMSprite;
+    [SerializeField] Sprite notMuteBGMSprite;
+    [SerializeField] Sprite muteSESprite;
+    [SerializeField] Sprite notMuteSESprite;
+    [SerializeField] Sprite selectLightSprite;
+    [SerializeField] Sprite notSelectLightSprite;
+
+    [SerializeField] GameObject bgmButton;
+    [SerializeField] GameObject seButton;
+
     GameObject[] difficultyUI;
     GameObject[] selectLight;
+    
 
     void requestDefaultBanner()
     {
@@ -63,6 +77,22 @@ public class StageSelectManager : MonoBehaviour
     {
         // 広告の生成
         requestDefaultBanner();
+
+        // BGMの設定
+        if(new AudioManager().GetBGMFlag()) {
+            audioSource.GetComponent<AudioSource>().mute = true;
+            bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
+        }else {
+            audioSource.GetComponent<AudioSource>().mute = false;
+            bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
+        }
+
+        // SEの設定
+        if(new AudioManager().GetSEFlag()) {
+            seButton.GetComponent<Image>().sprite = muteSESprite;
+        }else {
+            seButton.GetComponent<Image>().sprite = notMuteSESprite;
+        }
 
         // 難易度の個数を取得
         difficultyUI = new GameObject[]{easyUI, normalUI, hardUI};
@@ -113,6 +143,8 @@ public class StageSelectManager : MonoBehaviour
             selectLightClone.transform.SetParent(UILayer.transform, false);
 
             selectLight[x] = selectLightClone;
+            if(x == currentDifficulty) selectLight[x].GetComponent<Image>().sprite = selectLightSprite;
+            else selectLight[x].GetComponent<Image>().sprite = notSelectLightSprite;
 
         }
     }
@@ -126,12 +158,50 @@ public class StageSelectManager : MonoBehaviour
         }
     }
 
+    public void soundSE(bool argSEFlag) {
+        if(!argSEFlag) {
+            decisionSoundEffect.GetComponent<AudioSource>().PlayOneShot(decisionSoundEffect.GetComponent<AudioSource>().clip);
+        }
+    }
+
     public void OnClickStageEasierButton() {
+        soundSE(new AudioManager().GetSEFlag());
+        selectLight[currentDifficulty].GetComponent<Image>().sprite = notSelectLightSprite;
         currentDifficulty = (currentDifficulty+difficultyNumber-1)%difficultyNumber;
+        selectLight[currentDifficulty].GetComponent<Image>().sprite = selectLightSprite;
     }
 
     public void OnClickStageHarderButton() {
+        soundSE(new AudioManager().GetSEFlag());
+        selectLight[currentDifficulty].GetComponent<Image>().sprite = notSelectLightSprite;
         currentDifficulty = (currentDifficulty+1)%difficultyNumber;
+        selectLight[currentDifficulty].GetComponent<Image>().sprite = selectLightSprite;
+    }
+
+    public void OnClickHomeButton() {
+        soundSE(new AudioManager().GetSEFlag());
+        SceneManager.LoadScene("Start");
+    }
+
+    public void OnClickBGMButton() {
+        soundSE(new AudioManager().GetSEFlag());
+        new AudioManager().SetBGMFlag(!(new AudioManager().GetBGMFlag()));
+        if(new AudioManager().GetBGMFlag()) {
+            bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
+        }else {
+            bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
+        }
+        audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
+    }
+
+    public void OnClickSEButton() {
+        soundSE(new AudioManager().GetSEFlag());
+        new AudioManager().SetSEFlag(!(new AudioManager().GetSEFlag()));
+        if(new AudioManager().GetSEFlag()) {
+            seButton.GetComponent<Image>().sprite = muteSESprite;
+        }else {
+            seButton.GetComponent<Image>().sprite = notMuteSESprite;
+        }
     }
 
 }

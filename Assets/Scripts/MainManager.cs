@@ -34,6 +34,8 @@ public class MainManager : MonoBehaviour
     [SerializeField] GameObject pausePanel;
     [SerializeField] GameObject clearPanel;
 
+    [SerializeField] Animator playerAnim;
+
 
     Tilemap stageBoard;
     static int currentDifficulty = 0;
@@ -100,6 +102,14 @@ public class MainManager : MonoBehaviour
 
         Time.timeScale = 1.0f;
         clearFlag = false;
+
+        // プレイヤーのアニメーションをリセット
+        playerAnim.SetBool("ToLeft", false);
+        playerAnim.SetBool("ToRight", false);
+        playerAnim.SetBool("ToUp", false);
+        playerAnim.SetBool("ToDown", false);
+        playerAnim.SetBool("ToDown", true);
+        playerAnim.Play("Player_Walk_Down", 0, 0.0f);
 
         // 盤面のタイルマップをリセット
         Destroy(GameObject.Find("StageBoard(Clone)"));
@@ -196,20 +206,37 @@ public class MainManager : MonoBehaviour
 
     void Update()
     {
-
-        if(isFinish && (player.transform.position - goalPosition).magnitude <= EPS) {
+        if(isFinish && (player.transform.position - goalPosition).magnitude <= EPS) { //ゴールに着いた
             if(clearFlag == false) {
+                playerAnim.SetFloat("MovingSpeed", 0.0f);
+                playerAnim.SetBool("ToLeft", false);
+                playerAnim.SetBool("ToRight", false);
+                playerAnim.SetBool("ToUp", false);
+                playerAnim.SetBool("ToDown", false);
+                playerAnim.SetBool("ToDown", true);
+                playerAnim.Play(playerAnim.GetCurrentAnimatorStateInfo(0).nameHash, 0, 0.0f);
                 requestPauseBanner();
                 clearPanel.SetActive(true);
                 string stageName = "StageScore" + currentDifficulty.ToString() + "_" + currentStageId.ToString();
                 PlayerPrefs.SetInt(stageName, 1);
                 clearFlag = true;
             }
-        }else if(reachedSnowBall && (player.transform.position - targetPosition).magnitude <= EPS) {
+        }else if(reachedSnowBall && (player.transform.position - targetPosition).magnitude <= EPS) { // 雪玉に当たった
+            playerAnim.SetFloat("MovingSpeed", 0.0f);
             reachedSnowBall = false;
             stageBoard.SetTile(snowBallPosition, iceFloor);
-        }else {
-            // 目的地に進む
+        }else if((player.transform.position - targetPosition).magnitude <= EPS) { //目的地につき、止まっている
+            playerAnim.SetFloat("MovingSpeed", 0.0f);
+            playerAnim.Play(playerAnim.GetCurrentAnimatorStateInfo(0).nameHash, 0, 0.0f);
+        }else { //目的地に進む
+            if(stageBoardGrid[stageBoard.WorldToCell(player.transform.position).y][stageBoard.WorldToCell(player.transform.position).x] == '.') {
+                playerAnim.SetFloat("MovingSpeed", 0.0f);
+                
+            }else {
+                playerAnim.SetFloat("MovingSpeed", 1.0f);
+            }
+            // Debug.Log(stageBoard.WorldToCell(player.transform.position));
+            // playerAnim.SetFloat("MovingSpeed", 1.0f);
             player.transform.position = Vector3.MoveTowards(player.transform.position, targetPosition, moveSpeed * Time.deltaTime);
             // Debug.Log((player.transform.position - targetPosition).magnitude.ToString("F15"));
             // Debug.Log((player.transform.position - goalPosition).magnitude.ToString("F15"));
@@ -256,6 +283,19 @@ public class MainManager : MonoBehaviour
         if(isFinish) return;
         if(reachedSnowBall) return;
         movePlayer(i);
+        playerAnim.SetBool("ToLeft", false);
+        playerAnim.SetBool("ToRight", false);
+        playerAnim.SetBool("ToUp", false);
+        playerAnim.SetBool("ToDown", false);
+        if(i == 0) {
+            playerAnim.SetBool("ToLeft", true);
+        }else if(i == 1) {
+            playerAnim.SetBool("ToRight", true);
+        }else if(i == 2) {
+            playerAnim.SetBool("ToUp", true);
+        }else if(i == 3) {
+            playerAnim.SetBool("ToDown", true);
+        }
     }
 
     public void OnClickPauseButton() {

@@ -1475,6 +1475,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 0
+  distance: 0
+  move: {x: 0, y: 0}
+  targetPos: {x: 0, y: 0, z: 0}
 --- !u!58 &789315993
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -1549,7 +1552,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 5481910891689336339, guid: 0f096eb45674d4162b88d4c64ff858c6,
+  m_Sprite: {fileID: -3289575033469672952, guid: 0f096eb45674d4162b88d4c64ff858c6,
     type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -1569,7 +1572,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 789315990}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.5, y: 1.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1618,11 +1621,47 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19bbd66f85174440ba3b46e66978f9dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  iceWall: {fileID: 11400000, guid: 20e38231f5704425783ad055606fa705, type: 2}
-  iceFloor: {fileID: 11400000, guid: 9812b0ccd20ba41aca1ca055d0030114, type: 2}
-  iceBlock: {fileID: 11400000, guid: 6158eefa1917a4deeba642d44a4ff408, type: 2}
-  snowBall: {fileID: 11400000, guid: af209962e2ef44c478ea9ee035eed73c, type: 2}
-  goalFloor: {fileID: 11400000, guid: 7857f892713434da7a280e2ef4ee37ee, type: 2}
+  iceFloor:
+  - {fileID: 11400000, guid: 1d1d8e03de2c74c548d1e4ceef53707c, type: 2}
+  - {fileID: 11400000, guid: 67d155560f6b44ee890d18affa219e1d, type: 2}
+  - {fileID: 11400000, guid: 7d9f54faf422f4a79bfd7b5ae920adac, type: 2}
+  - {fileID: 11400000, guid: 74d2e3364e45d46db9d0b2fead099075, type: 2}
+  - {fileID: 11400000, guid: d55660d504b004da3855892f4a50d2a6, type: 2}
+  - {fileID: 11400000, guid: 3d40c98c1b10445da970934f62fdb961, type: 2}
+  - {fileID: 11400000, guid: bf39210423a4446418559941a82e8907, type: 2}
+  - {fileID: 11400000, guid: 8bb1172315cd94e63a81ec087a20b2c3, type: 2}
+  - {fileID: 11400000, guid: 244baefc366d043e8b994c93888cfe7c, type: 2}
+  iceBlock:
+  - {fileID: 11400000, guid: 3ebcdf849eeed4821a2f86fecbc4c1c7, type: 2}
+  - {fileID: 11400000, guid: b45698abf78c24a2ea4328540df48d3b, type: 2}
+  - {fileID: 11400000, guid: a979bbd6d8ddb4234b8a2407094541e0, type: 2}
+  - {fileID: 11400000, guid: fb24319bc529145bdad0d05bd0f70b18, type: 2}
+  - {fileID: 11400000, guid: da5556daa0aa84b2fb153416144f03c0, type: 2}
+  - {fileID: 11400000, guid: 296bb528767a0486d9e093b3b7148f3c, type: 2}
+  - {fileID: 11400000, guid: 2a8ed6e640b2f42f88b1b1ead873e12b, type: 2}
+  - {fileID: 11400000, guid: 6a5b793479d844eeeb8b321170330c3f, type: 2}
+  - {fileID: 11400000, guid: 2a9ba82363ca049479e7e6a384f76af1, type: 2}
+  snowBall: {fileID: 0}
+  snowFloor:
+  - {fileID: 11400000, guid: 3b93b55fdb811404ca312fcaed3ed532, type: 2}
+  - {fileID: 11400000, guid: 3efd99ca41a674905a4bf3cbc9da60d0, type: 2}
+  - {fileID: 11400000, guid: daa76ac702e9843fa89502a482c7e156, type: 2}
+  - {fileID: 11400000, guid: b1547964658bd4bb1ad68f414a6b743a, type: 2}
+  - {fileID: 11400000, guid: 94e36259be5da4bc0bdb5bdd0c65e1b8, type: 2}
+  - {fileID: 11400000, guid: 455e79610ffb5400d812508c5c35c5d6, type: 2}
+  - {fileID: 11400000, guid: a14738cfc7acf42d6a4120ccf6fbd3bc, type: 2}
+  - {fileID: 11400000, guid: e74ab954c240d4d2a89a64723e245083, type: 2}
+  - {fileID: 11400000, guid: f14c875381899433e9df8d87daf05236, type: 2}
+  goalFloor:
+  - {fileID: 11400000, guid: 8f49a23d636cd41d5b1bf4f09de8d367, type: 2}
+  - {fileID: 11400000, guid: d763d1f6a253e4ab3aa875b823993a06, type: 2}
+  - {fileID: 11400000, guid: 6d0d5880471ae46fa867ddc7113a4843, type: 2}
+  - {fileID: 11400000, guid: 03781783e50dd4697b5547ff03610bc2, type: 2}
+  - {fileID: 11400000, guid: 1633dd51190e148caaeb821955959009, type: 2}
+  - {fileID: 11400000, guid: 604b50e9820754c4ea421f6f661ab359, type: 2}
+  - {fileID: 11400000, guid: be3cf17dcfbac421286ee18a043df703, type: 2}
+  - {fileID: 11400000, guid: 93249bd919f894e4ab31dd3982382765, type: 2}
+  - {fileID: 11400000, guid: 628d73ba92c7243a2aeb8f9270e9d98e, type: 2}
   stageBoardPrefab: {fileID: 756336616931772495, guid: f5db3c08dba4045458c77f6e39f870c6,
     type: 3}
   player: {fileID: 789315990}

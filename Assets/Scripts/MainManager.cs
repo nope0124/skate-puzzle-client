@@ -15,12 +15,11 @@ public class MainManager : MonoBehaviour
     private BannerView defaultBannerView;
     private BannerView pauseBannerView;
 
-    [SerializeField] TileBase iceWall;
-    [SerializeField] TileBase iceFloor;
-    [SerializeField] TileBase iceBlock;
+    [SerializeField] TileBase[] iceFloor;
+    [SerializeField] TileBase[] iceBlock;
     [SerializeField] TileBase snowBall;
-    // [SerializeField] TileBase soilFloor;
-    [SerializeField] TileBase goalFloor;
+    [SerializeField] TileBase[] snowFloor;
+    [SerializeField] TileBase[] goalFloor;
     [SerializeField] GameObject stageBoardPrefab;
     [SerializeField] GameObject player;
     
@@ -96,6 +95,35 @@ public class MainManager : MonoBehaviour
         pauseBannerView.LoadAd(request);
     }
 
+    void AnimatorReset() {
+        playerAnim.SetBool("ToLeft", false);
+        playerAnim.SetBool("ToRight", false);
+        playerAnim.SetBool("ToUp", false);
+        playerAnim.SetBool("ToDown", false);
+    }
+
+    void SetTileBoard(int x, int y, TileBase[] tempTile) {
+        Vector3Int grid = new Vector3Int(x, y, 0);
+        if(x == 0 && y == 0) { // 左下
+            stageBoard.SetTile(grid, tempTile[6]);
+        }else if(x == stageBoardGridWidth-1 && y == 0) { // 右下
+            stageBoard.SetTile(grid, tempTile[8]);
+        }else if(x == 0 && y == stageBoardGridHeight-1) { // 左上
+            stageBoard.SetTile(grid, tempTile[0]);
+        }else if(x == stageBoardGridWidth-1 && y == stageBoardGridHeight-1) { // 右上
+            stageBoard.SetTile(grid, tempTile[2]);
+        }else if(x == 0) { // 右
+            stageBoard.SetTile(grid, tempTile[3]);
+        }else if(x == stageBoardGridWidth-1) { // 左
+            stageBoard.SetTile(grid, tempTile[5]);
+        }else if(y == 0) { // 下
+            stageBoard.SetTile(grid, tempTile[7]);
+        }else if(y == stageBoardGridHeight-1) { // 上
+            stageBoard.SetTile(grid, tempTile[1]);
+        }else { // 中
+            stageBoard.SetTile(grid, tempTile[4]);
+        }
+    }
 
 
     void init() {
@@ -104,12 +132,8 @@ public class MainManager : MonoBehaviour
         clearFlag = false;
 
         // プレイヤーのアニメーションをリセット
-        playerAnim.SetBool("ToLeft", false);
-        playerAnim.SetBool("ToRight", false);
-        playerAnim.SetBool("ToUp", false);
-        playerAnim.SetBool("ToDown", false);
+        AnimatorReset();
         playerAnim.SetBool("ToDown", true);
-        playerAnim.Play("Player_Walk_Down", 0, 0.0f);
 
         // 盤面のタイルマップをリセット
         Destroy(GameObject.Find("StageBoard(Clone)"));
@@ -138,34 +162,32 @@ public class MainManager : MonoBehaviour
 
 
         // 盤面の状態を反映
-        for(int i = 0; i < stageBoardGridHeight; i++) {
-            for(int j = 0; j < stageBoardGridWidth; j++) {
-                Vector3Int grid = new Vector3Int(j, i, 0);
-                switch(stageBoardGrid[i][j]) {
-                    case '#':
-                        stageBoard.SetTile(grid, iceWall);
-                        break;
+        for(int y = 0; y < stageBoardGridHeight; y++) {
+            for(int x = 0; x < stageBoardGridWidth; x++) {
+                Vector3Int grid = new Vector3Int(x, y, 0);
+                switch(stageBoardGrid[y][x]) {
                     case '.':
-                        stageBoard.SetTile(grid, iceFloor);
+                        SetTileBoard(x, y, iceFloor);
                         break;
                     case 'x':
-                        stageBoard.SetTile(grid, iceBlock);
+                        SetTileBoard(x, y, iceBlock);
                         break;
                     case '@':
                         stageBoard.SetTile(grid, snowBall);
                         break;
                     case 'S':
+                        SetTileBoard(x, y, snowFloor);
                         startPointX = stageBoard.CellToWorld(grid).x;
                         startPointY = stageBoard.CellToWorld(grid).y;
-                        startPointXOnBoard = j;
-                        startPointYOnBoard = i;
+                        startPointXOnBoard = x;
+                        startPointYOnBoard = y;
                         break;
                     case 'G':
-                        stageBoard.SetTile(grid, goalFloor);
+                        SetTileBoard(x, y, goalFloor);
                         goalPointX = stageBoard.CellToWorld(grid).x;
                         goalPointY = stageBoard.CellToWorld(grid).y;
-                        goalPointXOnBoard = j;
-                        goalPointYOnBoard = i;
+                        goalPointXOnBoard = x;
+                        goalPointYOnBoard = y;
                         break;
                     default:
                         break;
@@ -206,37 +228,32 @@ public class MainManager : MonoBehaviour
 
     void Update()
     {
-        if(isFinish && (player.transform.position - goalPosition).magnitude <= EPS) { //ゴールに着いた
+        if(isFinish && (player.transform.position - goalPosition).magnitude <= EPS) { //ゴールに着いている状態
             if(clearFlag == false) {
                 playerAnim.SetFloat("MovingSpeed", 0.0f);
-                playerAnim.SetBool("ToLeft", false);
-                playerAnim.SetBool("ToRight", false);
-                playerAnim.SetBool("ToUp", false);
-                playerAnim.SetBool("ToDown", false);
+                AnimatorReset();
                 playerAnim.SetBool("ToDown", true);
-                playerAnim.Play(playerAnim.GetCurrentAnimatorStateInfo(0).nameHash, 0, 0.0f);
                 requestPauseBanner();
                 clearPanel.SetActive(true);
                 string stageName = "StageScore" + currentDifficulty.ToString() + "_" + currentStageId.ToString();
+                string stageNameUnlock = "UnlockStage" + ((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber).ToString() + "_" + ((currentStageId+1) % stageNumber).ToString();
                 PlayerPrefs.SetInt(stageName, 1);
+                if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) PlayerPrefs.SetInt(stageNameUnlock, 1);
                 clearFlag = true;
             }
-        }else if(reachedSnowBall && (player.transform.position - targetPosition).magnitude <= EPS) { // 雪玉に当たった
+        }else if(reachedSnowBall && (player.transform.position - targetPosition).magnitude <= EPS) { // 雪玉に当たった状態
             playerAnim.SetFloat("MovingSpeed", 0.0f);
             reachedSnowBall = false;
-            stageBoard.SetTile(snowBallPosition, iceFloor);
-        }else if((player.transform.position - targetPosition).magnitude <= EPS) { //目的地につき、止まっている
+            SetTileBoard(snowBallPosition.x, snowBallPosition.y, iceFloor);
+        }else if((player.transform.position - targetPosition).magnitude <= EPS) { //目的地に着き、止まっている状態
             playerAnim.SetFloat("MovingSpeed", 0.0f);
             playerAnim.Play(playerAnim.GetCurrentAnimatorStateInfo(0).nameHash, 0, 0.0f);
-        }else { //目的地に進む
+        }else { //目的地に進んでいる状態
             if(stageBoardGrid[stageBoard.WorldToCell(player.transform.position).y][stageBoard.WorldToCell(player.transform.position).x] == '.') {
                 playerAnim.SetFloat("MovingSpeed", 0.0f);
-                
             }else {
                 playerAnim.SetFloat("MovingSpeed", 1.0f);
             }
-            // Debug.Log(stageBoard.WorldToCell(player.transform.position));
-            // playerAnim.SetFloat("MovingSpeed", 1.0f);
             player.transform.position = Vector3.MoveTowards(player.transform.position, targetPosition, moveSpeed * Time.deltaTime);
             // Debug.Log((player.transform.position - targetPosition).magnitude.ToString("F15"));
             // Debug.Log((player.transform.position - goalPosition).magnitude.ToString("F15"));
@@ -283,10 +300,7 @@ public class MainManager : MonoBehaviour
         if(isFinish) return;
         if(reachedSnowBall) return;
         movePlayer(i);
-        playerAnim.SetBool("ToLeft", false);
-        playerAnim.SetBool("ToRight", false);
-        playerAnim.SetBool("ToUp", false);
-        playerAnim.SetBool("ToDown", false);
+        AnimatorReset();
         if(i == 0) {
             playerAnim.SetBool("ToLeft", true);
         }else if(i == 1) {

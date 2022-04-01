@@ -15,7 +15,8 @@ public class StartManager : MonoBehaviour
     
     void Start()
     {
-        
+        string stageNameUnlock = "UnlockStage0_0";
+        PlayerPrefs.SetInt(stageNameUnlock, 1);
     }
 
     void Update()
@@ -38,9 +39,12 @@ public class StartManager : MonoBehaviour
         for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
             for(int tempStageId = 0; tempStageId < stageNumber; tempStageId++) {
                 string stageName = "StageScore" + tempDifficulty.ToString() + "_" + tempStageId.ToString();
+                string stageNameUnlock = "UnlockStage" + tempDifficulty.ToString() + "_" + tempStageId.ToString();
                 PlayerPrefs.SetInt(stageName, 0);
+                PlayerPrefs.SetInt(stageNameUnlock, 0);
             }
         }
+        PlayerPrefs.SetInt("UnlockStage0_0", 1);
         dataResetPanel.SetActive(false);
         dataResetFinishPanel.SetActive(true);
     }

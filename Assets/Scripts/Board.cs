@@ -4,22 +4,21 @@ using UnityEngine;
 
 public class Board : MonoBehaviour
 {
-    // IceWall   -> #
     // IceFloor  -> .
     // IceBlock  -> x
     // SnoqBall  -> @
-    // SoilFloor -> o
+    // SnowFloor -> o
     // Start     -> S
     // Goal      -> G
 
     // 15ステージ
     private readonly char[][][] EASY_BOARD = new char[][][] {
         new char[][] { 
-            new char[] {'.', '.', '.', '.', 'x'},
             new char[] {'.', '.', '.', '.', '.'},
-            new char[] {'.', '.', '.', 'G', '.'},
             new char[] {'.', '.', '.', '.', '.'},
-            new char[] {'S', '.', '.', '.', 'x'},
+            new char[] {'.', '.', '.', '.', 'G'},
+            new char[] {'.', '.', '.', '.', '.'},
+            new char[] {'S', '.', '.', '.', '.'},
         },
 
         new char[][] { 
@@ -31,21 +30,23 @@ public class Board : MonoBehaviour
             new char[] {'S', '.', '.', '.', '.', 'x'},
         },
 
-        new char[][] { 
-            new char[] {'#', '#', '#', '#', '#', '#'},
-            new char[] {'#', '.', '.', '.', 'x', '#'},
-            new char[] {'#', '@', '.', '.', '.', '#'},
-            new char[] {'#', '.', '.', 'G', '.', '#'},
-            new char[] {'#', '.', '.', '.', '.', '#'},
-            new char[] {'#', 'S', '.', '.', 'x', '#'},
-            new char[] {'#', '#', '#', '#', '#', '#'},
+        
+
+        
+        new char[][] {
+            new char[] {'.', '.', '.', '.', 'x'},
+            new char[] {'.', '.', '.', '.', '.'},
+            new char[] {'.', '.', '.', 'G', '.'},
+            new char[] {'.', '.', '.', '.', '.'},
+            new char[] {'S', '.', '.', '.', 'x'},
         },
 
-        new char[][] { 
-            new char[] {'@', '.', '.', '.'},
-            new char[] {'.', '.', 'G', '.'},
-            new char[] {'.', '.', '.', '.'},
-            new char[] {'S', '.', '.', 'x'},
+        new char[][] {
+            new char[] {'.', '.', '.', '.', 'x'},
+            new char[] {'.', '.', '.', '.', '.'},
+            new char[] {'.', '.', '.', 'G', '.'},
+            new char[] {'.', '.', '.', '.', '.'},
+            new char[] {'S', '.', '.', '.', 'x'},
         },
 
 

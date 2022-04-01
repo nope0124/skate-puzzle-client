@@ -128,6 +128,11 @@ public class StageSelectManager : MonoBehaviour
                     stageCloneChildStageButtonScript.argStageId = tempStageId;
                     stageCloneChildStageButtonScript.argDifficulty = tempDifficulty;
 
+                    // もし1個前のステージがクリアしてなかったら鍵をかける
+                    GameObject stageCloneChildStageLockImage = stageClone.transform.Find("StageLockImage").gameObject;
+                    string stageNameUnlock = "UnlockStage" + tempDifficulty.ToString() + "_" + tempStageId.ToString();
+                    if(PlayerPrefs.GetInt(stageNameUnlock, 0) == 1) stageCloneChildStageLockImage.SetActive(false);
+                    else stageCloneChildStageLockImage.SetActive(true);
                 }
             }
             // 最後に大元のレイヤーに付ける

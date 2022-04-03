@@ -45,6 +45,17 @@ public class MainManager : MonoBehaviour
     [SerializeField] GameObject[] DPadButton;
     [SerializeField] Sprite[] blueButton;
     [SerializeField] Sprite[] redButton; 
+
+    [SerializeField] Sprite muteBGMSprite;
+    [SerializeField] Sprite notMuteBGMSprite;
+    [SerializeField] Sprite muteSESprite;
+    [SerializeField] Sprite notMuteSESprite;
+
+    [SerializeField] GameObject bgmButton;
+    [SerializeField] GameObject seButton;
+
+    [SerializeField] AudioSource audioSource;
+    [SerializeField] AudioSource decisionSoundEffect;
     
 
 
@@ -82,6 +93,9 @@ public class MainManager : MonoBehaviour
     float fadeTimeCount = 1.0f;
 
     bool hintFlag = false;
+    static int gamePlayCount = 0;
+    int adPlayBorderCount = 10;
+    bool nextFlag = false;
 
     Stack<int> hintMovesStack = new Stack<int>();
 
@@ -97,7 +111,6 @@ public class MainManager : MonoBehaviour
         defaultBannerView = new BannerView(adUnitId, AdSize.IABBanner, AdPosition.Bottom);
         AdRequest request = new AdRequest.Builder().Build();
 
-        MobileAds.Initialize(initStatus => { });
         defaultBannerView.LoadAd(request);
     }
 
@@ -112,7 +125,6 @@ public class MainManager : MonoBehaviour
         pauseBannerView = new BannerView(adUnitId, AdSize.MediumRectangle, AdPosition.Center);
         AdRequest request = new AdRequest.Builder().Build();
 
-        MobileAds.Initialize(initStatus => { });
         pauseBannerView.LoadAd(request);
     }
 
@@ -145,10 +157,33 @@ public class MainManager : MonoBehaviour
         stageTransInterstitialAd.LoadAd(request);
     }
 
-    // シーン遷移処理
-    private void LoadNextScene()
+    private void RequestHintInterstitial()
     {
-        SceneManager.LoadScene("StageSelect");
+        // ★リリース時に自分のIDに変更する
+        #if UNITY_IOS
+            string adUnitId = AdmobVariableScript.GetIPHONE_HINT_INTERSTITIAL();
+        #else
+            string adUnitId = "unexpected_platform";
+        #endif
+
+        // Initialize an InterstitialAd.
+        hintInterstitialAd = new InterstitialAd(adUnitId);
+
+        // Called when an ad request has successfully loaded.
+        hintInterstitialAd.OnAdLoaded += HandleOnAdLoaded;
+        // Called when an ad request failed to load.
+        hintInterstitialAd.OnAdFailedToLoad += HandleOnAdFailedToLoad;
+        // Called when an ad is shown.
+        hintInterstitialAd.OnAdOpening += HandleOnAdOpened;
+        // Called when the ad is closed.
+        hintInterstitialAd.OnAdClosed += HandleOnAdClosed;
+        // Called when the ad click caused the user to leave the application.
+        hintInterstitialAd.OnAdDidRecordImpression += HandleOnAdLeavingApplication;
+
+        // Create an empty ad request.
+        AdRequest request = new AdRequest.Builder().Build();
+        // Load the interstitial with the request.
+        hintInterstitialAd.LoadAd(request);
     }
 
     private void OnDestroy()
@@ -168,7 +203,7 @@ public class MainManager : MonoBehaviour
     public void HandleOnAdFailedToLoad(object sender, AdFailedToLoadEventArgs args)
     {
         // 次のシーンに遷移
-        LoadNextScene();
+        SceneManager.LoadScene("StageSelect");
     }
 
     // 広告がデバイスの画面いっぱいに表示されたとき
@@ -179,13 +214,22 @@ public class MainManager : MonoBehaviour
     // 広告を閉じたとき
     public void HandleOnAdClosed(object sender, System.EventArgs args)
     {
+        
         // 次のシーンに遷移
-        // if (retryFlag == true) {
-        //     retryFlag = false;
-        //     RequestInterstitial();
-        // } else {
-            LoadNextScene();
-        // }
+        if(hintFlag == true) {
+            gamePlayCount = Mathf.Max(0, gamePlayCount-3);
+            hintFlag = false;
+            audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
+            RequestHintInterstitial();
+        } else if (nextFlag == true) {
+            gamePlayCount = 0;
+            nextFlag = false;
+            audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
+            RequestStageTransInterstitial();
+        } else {
+            gamePlayCount = 0;
+            SceneManager.LoadScene("StageSelect");
+        }
     }
     
     // 別のアプリ（Google Play ストアなど）を起動した時
@@ -233,11 +277,32 @@ public class MainManager : MonoBehaviour
         Time.timeScale = 1.0f;
         clearFlag = false;
         hintFlag = false;
+        hintMovesStack.Clear();
+
+        ButtonHintReset();
 
         // フェードイン
         fadeImage.SetActive(true);
         fadeInFlag = true;
         fadeOutFlag = false;
+
+        // BGMの設定
+        if(new AudioManager().GetBGMFlag()) {
+            audioSource.GetComponent<AudioSource>().mute = true;
+            bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
+        }else {
+            audioSource.GetComponent<AudioSource>().mute = false;
+            bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
+        }
+
+        // SEの設定
+        if(new AudioManager().GetSEFlag()) {
+            seButton.GetComponent<Image>().sprite = muteSESprite;
+        }else {
+            seButton.GetComponent<Image>().sprite = notMuteSESprite;
+        }
+
+        
 
 
         // プレイヤーのアニメーションをリセット
@@ -323,6 +388,7 @@ public class MainManager : MonoBehaviour
 
     void Start()
     {
+        MobileAds.Initialize(initStatus => { });
         // 盤面のサイズを取得
         // 盤面のサイズを調整
         // 盤面の状態をコピー
@@ -334,6 +400,8 @@ public class MainManager : MonoBehaviour
 
     void Update()
     {
+        if(gamePlayCount >= 20) gamePlayCount = 20;
+
         if(fadeInFlag) {
             fadeTimeCount -= Time.deltaTime * 2;
             fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Max(0.0f, fadeTimeCount));
@@ -348,31 +416,45 @@ public class MainManager : MonoBehaviour
             }
             return;
         }
+
+
         if(fadeOutFlag) {
             Time.timeScale = 1.0f;
             fadeTimeCount += Time.deltaTime * 2;
             fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Min(1.0f, fadeTimeCount));
-            if (fadeTimeCount > 1.0f+EPS) {
+            if(fadeTimeCount > 1.0f+EPS) {
                 fadeTimeCount = 1.0f;
-                if (stageTransInterstitialAd.IsLoaded()) {
+                if(stageTransInterstitialAd.IsLoaded() && gamePlayCount >= adPlayBorderCount) {
+                    audioSource.GetComponent<AudioSource>().mute = true;
                     stageTransInterstitialAd.Show();
-                } else {
+                    fadeOutFlag = false;
+                }else {
                     SceneManager.LoadScene("StageSelect");
                 }
             }
             return;
         }
+
+
         if(isFinish && (player.transform.position - goalPosition).magnitude <= EPS) { //ゴールに着いている状態
             if(clearFlag == false) {
                 playerAnim.SetFloat("MovingSpeed", 0.0f);
+
+
                 AnimatorReset();
                 playerAnim.SetBool("ToDown", true);
+
+
                 RequestPauseBanner();
                 clearPanel.SetActive(true);
+
+
                 string stageName = "StageScore" + currentDifficulty.ToString() + "_" + currentStageId.ToString();
                 string stageNameUnlock = "UnlockStage" + ((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber).ToString() + "_" + ((currentStageId+1) % stageNumber).ToString();
                 PlayerPrefs.SetInt(stageName, 1);
                 if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) PlayerPrefs.SetInt(stageNameUnlock, 1);
+
+
                 clearFlag = true;
             }
         }else if(reachedSnowBall && (player.transform.position - targetPosition).magnitude <= EPS) { // 雪玉に当たった状態
@@ -394,6 +476,13 @@ public class MainManager : MonoBehaviour
         }
         
     }
+
+    public void soundSE(bool argSEFlag) {
+        if(!argSEFlag) {
+            decisionSoundEffect.GetComponent<AudioSource>().PlayOneShot(decisionSoundEffect.GetComponent<AudioSource>().clip);
+        }
+    }
+
 
 
     private void MovePlayer(int i)  {
@@ -430,10 +519,11 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickMoveButton(int i) {
+        soundSE(new AudioManager().GetSEFlag());
         if((player.transform.position - targetPosition).magnitude > EPS) return;
         if(isFinish) return;
         if(reachedSnowBall) return;
-        if(hintFlag) {
+        if(hintMovesStack.Count > 0) {
             if(i == hintMovesStack.Peek()) {
                 MovePlayer(i);
                 AnimatorReset();
@@ -449,7 +539,6 @@ public class MainManager : MonoBehaviour
                 hintMovesStack.Pop();
                 ButtonHintReset();
                 if(hintMovesStack.Count > 0) DPadButton[hintMovesStack.Peek()].GetComponent<Image>().sprite = redButton[hintMovesStack.Peek()];
-                else hintFlag = false;
             }else {
                 return;
             }
@@ -470,6 +559,7 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickPauseButton() {
+        soundSE(new AudioManager().GetSEFlag());
         if(isFinish) return;
         RequestPauseBanner();
         if (!pausePanel.activeSelf) {
@@ -479,6 +569,7 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickBackButton() {
+        soundSE(new AudioManager().GetSEFlag());
         fadeImage.SetActive(true);
         fadeOutFlag = true;
         defaultBannerView.Destroy();
@@ -486,6 +577,8 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickRetryButton() {
+        soundSE(new AudioManager().GetSEFlag());
+        gamePlayCount++;
         Init();
         pausePanel.SetActive(false);
         pauseBannerView.Destroy();
@@ -493,12 +586,14 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickPlayButton() {
+        soundSE(new AudioManager().GetSEFlag());
         pausePanel.SetActive(false);
         pauseBannerView.Destroy();
         Time.timeScale = 1.0f;
     }
 
     public void OnClickHintButton() {
+        soundSE(new AudioManager().GetSEFlag());
         if(isFinish) return;
         if (!hintPanel.activeSelf) {
             hintPanel.SetActive(true);
@@ -513,10 +608,13 @@ public class MainManager : MonoBehaviour
     }
     
     public void OnClickHintYesButton() {
+        soundSE(new AudioManager().GetSEFlag());
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
         Init();
         hintFlag = true;
+        audioSource.GetComponent<AudioSource>().mute = true;
+        stageTransInterstitialAd.Show();
         int[] HINT = new Board().GetHint(currentDifficulty, currentStageId);
         hintMovesStack.Clear();
         for(int i = HINT.Length-1; i >= 0; i--) {
@@ -527,6 +625,7 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickHintNoButton() {
+        soundSE(new AudioManager().GetSEFlag());
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
     }
@@ -534,9 +633,16 @@ public class MainManager : MonoBehaviour
 
 
     public void OnClickNextButton() {
+        soundSE(new AudioManager().GetSEFlag());
+        gamePlayCount += 2;
         currentDifficulty = (currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber;
         currentStageId = (currentStageId+1) % stageNumber;
         Init();
+        if(gamePlayCount >= adPlayBorderCount) {
+            nextFlag = true;
+            audioSource.GetComponent<AudioSource>().mute = true;
+            stageTransInterstitialAd.Show();
+        }
         pauseBannerView.Destroy();
     }
 
@@ -548,4 +654,26 @@ public class MainManager : MonoBehaviour
     public void SetCurrentDifficulty(int argDifficulty) {
         currentDifficulty = argDifficulty;
     }
+
+    public void OnClickBGMButton() {
+        soundSE(new AudioManager().GetSEFlag());
+        new AudioManager().SetBGMFlag(!(new AudioManager().GetBGMFlag()));
+        if(new AudioManager().GetBGMFlag()) {
+            bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
+        }else {
+            bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
+        }
+        audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
+    }
+
+    public void OnClickSEButton() {
+        soundSE(new AudioManager().GetSEFlag());
+        new AudioManager().SetSEFlag(!(new AudioManager().GetSEFlag()));
+        if(new AudioManager().GetSEFlag()) {
+            seButton.GetComponent<Image>().sprite = muteSESprite;
+        }else {
+            seButton.GetComponent<Image>().sprite = notMuteSESprite;
+        }
+    }
+
 }

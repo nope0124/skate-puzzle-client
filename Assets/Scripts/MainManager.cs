@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Tilemaps;
 using UnityEngine.SceneManagement;
 using GoogleMobileAds.Api;
@@ -14,31 +15,42 @@ public class MainManager : MonoBehaviour
 
     private BannerView defaultBannerView;
     private BannerView pauseBannerView;
+    private InterstitialAd stageTransInterstitialAd;
+    private InterstitialAd hintInterstitialAd;
 
     [SerializeField] TileBase[] iceFloor;
     [SerializeField] TileBase[] iceBlock;
     [SerializeField] TileBase snowBall;
     [SerializeField] TileBase[] snowFloor;
     [SerializeField] TileBase[] goalFloor;
+
     [SerializeField] GameObject stageBoardPrefab;
     [SerializeField] GameObject player;
     
     [SerializeField] GameObject gridLayer;
-    [SerializeField] GameObject backgroundLayer;
+
     [SerializeField] GameObject unitLayer;
     [SerializeField] GameObject UILayer;
     [SerializeField] GameObject buttonLayer;
     [SerializeField] GameObject effectLayer;
 
     [SerializeField] GameObject pausePanel;
+    [SerializeField] GameObject hintPanel;
     [SerializeField] GameObject clearPanel;
 
     [SerializeField] Animator playerAnim;
 
+    [SerializeField] GameObject fadeImage;
+
+    [SerializeField] GameObject[] DPadButton;
+    [SerializeField] Sprite[] blueButton;
+    [SerializeField] Sprite[] redButton; 
+    
+
 
     Tilemap stageBoard;
     static int currentDifficulty = 0;
-    const int difficultyNumber = 3;
+    const int difficultyNumber = 2;
     static int currentStageId = 0;
     const int stageNumber = 15;
 
@@ -65,10 +77,19 @@ public class MainManager : MonoBehaviour
     bool clearFlag = false;
 
 
-    void requestDefaultBanner()
+    bool fadeOutFlag = false;
+    bool fadeInFlag = true;
+    float fadeTimeCount = 1.0f;
+
+    bool hintFlag = false;
+
+    Stack<int> hintMovesStack = new Stack<int>();
+
+
+    private void RequestDefaultBanner()
     {
         #if UNITY_IOS
-            string adUnitId = AdmobVariable.getIPHONE_DEFAULT_BANNER();
+            string adUnitId = AdmobVariable.GetIPHONE_DEFAULT_BANNER();
         #else
             string adUnitId = "unexpected_platform";
         #endif
@@ -80,10 +101,10 @@ public class MainManager : MonoBehaviour
         defaultBannerView.LoadAd(request);
     }
 
-    void requestPauseBanner()
+    private void RequestPauseBanner()
     {
         #if UNITY_IOS
-            string adUnitId = AdmobVariable.getIPHONE_PAUSE_BANNER();
+            string adUnitId = AdmobVariable.GetIPHONE_PAUSE_BANNER();
         #else
             string adUnitId = "unexpected_platform";
         #endif
@@ -94,6 +115,87 @@ public class MainManager : MonoBehaviour
         MobileAds.Initialize(initStatus => { });
         pauseBannerView.LoadAd(request);
     }
+
+    private void RequestStageTransInterstitial()
+    {
+        // ★リリース時に自分のIDに変更する
+        #if UNITY_IOS
+            string adUnitId = AdmobVariableScript.GetIPHONE_STAGE_TRANS_INTERSTITIAL();
+        #else
+            string adUnitId = "unexpected_platform";
+        #endif
+
+        // Initialize an InterstitialAd.
+        stageTransInterstitialAd = new InterstitialAd(adUnitId);
+
+        // Called when an ad request has successfully loaded.
+        stageTransInterstitialAd.OnAdLoaded += HandleOnAdLoaded;
+        // Called when an ad request failed to load.
+        stageTransInterstitialAd.OnAdFailedToLoad += HandleOnAdFailedToLoad;
+        // Called when an ad is shown.
+        stageTransInterstitialAd.OnAdOpening += HandleOnAdOpened;
+        // Called when the ad is closed.
+        stageTransInterstitialAd.OnAdClosed += HandleOnAdClosed;
+        // Called when the ad click caused the user to leave the application.
+        stageTransInterstitialAd.OnAdDidRecordImpression += HandleOnAdLeavingApplication;
+
+        // Create an empty ad request.
+        AdRequest request = new AdRequest.Builder().Build();
+        // Load the interstitial with the request.
+        stageTransInterstitialAd.LoadAd(request);
+    }
+
+    // シーン遷移処理
+    private void LoadNextScene()
+    {
+        SceneManager.LoadScene("StageSelect");
+    }
+
+    private void OnDestroy()
+    {
+        // オブジェクトの破棄
+        stageTransInterstitialAd.Destroy();
+    }
+
+    // ---以下、イベントハンドラー
+    
+    // 広告の読み込み完了時
+    public void HandleOnAdLoaded(object sender, System.EventArgs args)
+    {
+    }
+
+    // 広告の読み込み失敗時
+    public void HandleOnAdFailedToLoad(object sender, AdFailedToLoadEventArgs args)
+    {
+        // 次のシーンに遷移
+        LoadNextScene();
+    }
+
+    // 広告がデバイスの画面いっぱいに表示されたとき
+    public void HandleOnAdOpened(object sender, System.EventArgs args)
+    {
+    }
+
+    // 広告を閉じたとき
+    public void HandleOnAdClosed(object sender, System.EventArgs args)
+    {
+        // 次のシーンに遷移
+        // if (retryFlag == true) {
+        //     retryFlag = false;
+        //     RequestInterstitial();
+        // } else {
+            LoadNextScene();
+        // }
+    }
+    
+    // 別のアプリ（Google Play ストアなど）を起動した時
+    public void HandleOnAdLeavingApplication(object sender, System.EventArgs args)
+    {
+    }
+
+
+
+
 
     void AnimatorReset() {
         playerAnim.SetBool("ToLeft", false);
@@ -126,13 +228,21 @@ public class MainManager : MonoBehaviour
     }
 
 
-    void init() {
+    void Init() {
 
         Time.timeScale = 1.0f;
         clearFlag = false;
+        hintFlag = false;
+
+        // フェードイン
+        fadeImage.SetActive(true);
+        fadeInFlag = true;
+        fadeOutFlag = false;
+
 
         // プレイヤーのアニメーションをリセット
         AnimatorReset();
+        playerAnim.SetFloat("MovingSpeed", 0.0f);
         playerAnim.SetBool("ToDown", true);
 
         // 盤面のタイルマップをリセット
@@ -213,27 +323,51 @@ public class MainManager : MonoBehaviour
 
     void Start()
     {
-        // 広告の生成
-        requestDefaultBanner();
-        
         // 盤面のサイズを取得
         // 盤面のサイズを調整
         // 盤面の状態をコピー
         // 盤面の状態を取得
         // プレイヤー位置の初期化
-        init();
-        
+        Init();
     }
-
+    
 
     void Update()
     {
+        if(fadeInFlag) {
+            fadeTimeCount -= Time.deltaTime * 2;
+            fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Max(0.0f, fadeTimeCount));
+            if(fadeTimeCount < 0.0f-EPS) {
+                fadeTimeCount = 0.0f;
+                fadeImage.SetActive(false);
+                fadeInFlag = false;
+                
+                // 広告の生成
+                RequestDefaultBanner();
+                RequestStageTransInterstitial();
+            }
+            return;
+        }
+        if(fadeOutFlag) {
+            Time.timeScale = 1.0f;
+            fadeTimeCount += Time.deltaTime * 2;
+            fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Min(1.0f, fadeTimeCount));
+            if (fadeTimeCount > 1.0f+EPS) {
+                fadeTimeCount = 1.0f;
+                if (stageTransInterstitialAd.IsLoaded()) {
+                    stageTransInterstitialAd.Show();
+                } else {
+                    SceneManager.LoadScene("StageSelect");
+                }
+            }
+            return;
+        }
         if(isFinish && (player.transform.position - goalPosition).magnitude <= EPS) { //ゴールに着いている状態
             if(clearFlag == false) {
                 playerAnim.SetFloat("MovingSpeed", 0.0f);
                 AnimatorReset();
                 playerAnim.SetBool("ToDown", true);
-                requestPauseBanner();
+                RequestPauseBanner();
                 clearPanel.SetActive(true);
                 string stageName = "StageScore" + currentDifficulty.ToString() + "_" + currentStageId.ToString();
                 string stageNameUnlock = "UnlockStage" + ((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber).ToString() + "_" + ((currentStageId+1) % stageNumber).ToString();
@@ -262,7 +396,7 @@ public class MainManager : MonoBehaviour
     }
 
 
-    private void movePlayer(int i)  {
+    private void MovePlayer(int i)  {
 
         // 次の到着場所を事前に計算
         while(true) {
@@ -299,22 +433,45 @@ public class MainManager : MonoBehaviour
         if((player.transform.position - targetPosition).magnitude > EPS) return;
         if(isFinish) return;
         if(reachedSnowBall) return;
-        movePlayer(i);
-        AnimatorReset();
-        if(i == 0) {
-            playerAnim.SetBool("ToLeft", true);
-        }else if(i == 1) {
-            playerAnim.SetBool("ToRight", true);
-        }else if(i == 2) {
-            playerAnim.SetBool("ToUp", true);
-        }else if(i == 3) {
-            playerAnim.SetBool("ToDown", true);
+        if(hintFlag) {
+            if(i == hintMovesStack.Peek()) {
+                MovePlayer(i);
+                AnimatorReset();
+                if(i == 0) {
+                    playerAnim.SetBool("ToLeft", true);
+                }else if(i == 1) {
+                    playerAnim.SetBool("ToRight", true);
+                }else if(i == 2) {
+                    playerAnim.SetBool("ToUp", true);
+                }else if(i == 3) {
+                    playerAnim.SetBool("ToDown", true);
+                }
+                hintMovesStack.Pop();
+                ButtonHintReset();
+                if(hintMovesStack.Count > 0) DPadButton[hintMovesStack.Peek()].GetComponent<Image>().sprite = redButton[hintMovesStack.Peek()];
+                else hintFlag = false;
+            }else {
+                return;
+            }
+        }else {
+            MovePlayer(i);
+            AnimatorReset();
+            if(i == 0) {
+                playerAnim.SetBool("ToLeft", true);
+            }else if(i == 1) {
+                playerAnim.SetBool("ToRight", true);
+            }else if(i == 2) {
+                playerAnim.SetBool("ToUp", true);
+            }else if(i == 3) {
+                playerAnim.SetBool("ToDown", true);
+            }
         }
+        
     }
 
     public void OnClickPauseButton() {
         if(isFinish) return;
-        requestPauseBanner();
+        RequestPauseBanner();
         if (!pausePanel.activeSelf) {
             pausePanel.SetActive(true);
             Time.timeScale = 0.0f;
@@ -322,13 +479,14 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickBackButton() {
+        fadeImage.SetActive(true);
+        fadeOutFlag = true;
         defaultBannerView.Destroy();
         pauseBannerView.Destroy();
-        SceneManager.LoadScene("StageSelect");
     }
 
     public void OnClickRetryButton() {
-        init();
+        Init();
         pausePanel.SetActive(false);
         pauseBannerView.Destroy();
         Time.timeScale = 1.0f;
@@ -340,10 +498,45 @@ public class MainManager : MonoBehaviour
         Time.timeScale = 1.0f;
     }
 
+    public void OnClickHintButton() {
+        if(isFinish) return;
+        if (!hintPanel.activeSelf) {
+            hintPanel.SetActive(true);
+            Time.timeScale = 0.0f;
+        }
+    }
+
+    void ButtonHintReset() {
+        for(int i = 0; i < 4; i++) {
+            DPadButton[i].GetComponent<Image>().sprite = blueButton[i];
+        }
+    }
+    
+    public void OnClickHintYesButton() {
+        hintPanel.SetActive(false);
+        Time.timeScale = 1.0f;
+        Init();
+        hintFlag = true;
+        int[] HINT = new Board().GetHint(currentDifficulty, currentStageId);
+        hintMovesStack.Clear();
+        for(int i = HINT.Length-1; i >= 0; i--) {
+            hintMovesStack.Push(HINT[i]);
+        }
+        ButtonHintReset();
+        DPadButton[hintMovesStack.Peek()].GetComponent<Image>().sprite = redButton[hintMovesStack.Peek()];
+    }
+
+    public void OnClickHintNoButton() {
+        hintPanel.SetActive(false);
+        Time.timeScale = 1.0f;
+    }
+
+
+
     public void OnClickNextButton() {
         currentDifficulty = (currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber;
         currentStageId = (currentStageId+1) % stageNumber;
-        init();
+        Init();
         pauseBannerView.Destroy();
     }
 

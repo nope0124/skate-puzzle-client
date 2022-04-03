@@ -20,6 +20,6 @@ public class ButtonManager : MonoBehaviour
         soundSE(new AudioManager().GetSEFlag());
         new MainManager().SetCurrentStageId(argStageId);
         new MainManager().SetCurrentDifficulty(argDifficulty);
-        SceneManager.LoadScene("Main");
+        new StageSelectManager().SetFadeOutFlagToMain();
     }
 }

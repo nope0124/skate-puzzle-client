@@ -7,26 +7,78 @@ using GoogleMobileAds.Api;
 
 public class StartManager : MonoBehaviour
 {
-    static int difficultyNumber = 3;
+    float EPS = 1e-5f;
+
+    static int difficultyNumber = 2;
     static int stageNumber = 15;
+
+    private BannerView defaultBannerView;
 
     [SerializeField] GameObject dataResetPanel;
     [SerializeField] GameObject dataResetFinishPanel;
+    [SerializeField] GameObject fadeImage;
+
+    bool fadeInFlag = true;
+    bool fadeOutFlag = false;
+    float fadeTimeCount = 1.0f;
+
+    void requestDefaultBanner()
+    {
+        #if UNITY_IOS
+            string adUnitId = AdmobVariable.GetIPHONE_DEFAULT_BANNER();
+        #else
+            string adUnitId = "unexpected_platform";
+        #endif
+
+        defaultBannerView = new BannerView(adUnitId, AdSize.IABBanner, AdPosition.Bottom);
+        AdRequest request = new AdRequest.Builder().Build();
+
+        MobileAds.Initialize(initStatus => { });
+        defaultBannerView.LoadAd(request);
+    }
     
     void Start()
     {
+        // フェードイン
+        fadeImage.SetActive(true);
+        fadeInFlag = true;
+        fadeOutFlag = false;
+
         string stageNameUnlock = "UnlockStage0_0";
         PlayerPrefs.SetInt(stageNameUnlock, 1);
     }
 
     void Update()
     {
-        
+        if(fadeInFlag) {
+            fadeTimeCount -= Time.deltaTime * 2;
+            fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Max(0.0f, fadeTimeCount));
+            if(fadeTimeCount < 0.0f-EPS) {
+                fadeTimeCount = 0.0f;
+                fadeImage.SetActive(false);
+                fadeInFlag = false;
+                
+                // 広告の生成
+                requestDefaultBanner();
+            }
+            return;
+        }
+        if(fadeOutFlag) {
+            defaultBannerView.Destroy();
+            fadeTimeCount += Time.deltaTime * 2;
+            fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Min(1.0f, fadeTimeCount));
+            if (fadeTimeCount > 1.0f+EPS) {
+                fadeTimeCount = 1.0f;
+                SceneManager.LoadScene("StageSelect");
+            }
+            return;
+        }
     }
 
     public void OnClickStartButton()
     {
-        SceneManager.LoadScene("StageSelect");
+        fadeOutFlag = true;
+        fadeImage.SetActive(true);
     }
 
     public void OnClickDataResetButton() {

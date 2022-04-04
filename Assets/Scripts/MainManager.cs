@@ -350,6 +350,9 @@ public class MainManager : MonoBehaviour
                     case '@':
                         stageBoard.SetTile(grid, snowBall);
                         break;
+                    case 'o':
+                        SetTileBoard(x, y, snowFloor);
+                        break;
                     case 'S':
                         SetTileBoard(x, y, snowFloor);
                         startPointX = stageBoard.CellToWorld(grid).x;

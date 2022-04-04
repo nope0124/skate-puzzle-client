@@ -1875,7 +1875,7 @@ MonoBehaviour:
   seButton: {fileID: 840723661}
   audioSource: {fileID: 1480576985}
   decisionSoundEffect: {fileID: 1541463224}
-  moveSpeed: 3
+  moveSpeed: 100
 --- !u!1 &840723661
 GameObject:
   m_ObjectHideFlags: 0

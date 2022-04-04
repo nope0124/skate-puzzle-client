@@ -23,7 +23,7 @@ public class StageSelectManager : MonoBehaviour
     const int stageSelectWidthNumber = 5;
     const int stageSelectHeightNumber = 3;
 
-    const int selectLightWidth = 200;
+    const int selectLightWidth = 150;
     const int selectLightWidthCenter = 0;
     const int selectLightHeightCenter = -270;
     const int selectLightWidthNumber = difficultyNumber;
@@ -84,6 +84,7 @@ public class StageSelectManager : MonoBehaviour
 
     void Start()
     {
+        PlayerPrefs.SetInt("UnlockStage0_0", 1);
         // フェードイン
         fadeImage.SetActive(true);
         fadeInFlag = true;

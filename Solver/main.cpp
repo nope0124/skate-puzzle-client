@@ -184,7 +184,7 @@ int main() {
   vector<string> board;
   vector<vector<int> > dist;
   while(1) {
-    H = 10;
+    H = 13;
     W = H;
     sx = 0;
     sy = H-1;

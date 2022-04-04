@@ -72,7 +72,7 @@ public class MainManager : MonoBehaviour
     float stageBoardWidthCenter = 0.0f;
     float stageBoardHeightCenter = 0.5f;
     float stageBoardWidth, stageBoardHeight;
-    float screenScale = 5.0f;
+    float screenScale = 4.5f;
     char[][] stageBoardGrid, currentStageBoardGrid;
 
     // 基本的に長さは同じ
@@ -94,7 +94,7 @@ public class MainManager : MonoBehaviour
 
     bool hintFlag = false;
     static int gamePlayCount = 0;
-    int adPlayBorderCount = 10;
+    int adPlayBorderCount = 9;
     bool nextFlag = false;
 
     Stack<int> hintMovesStack = new Stack<int>();
@@ -132,7 +132,7 @@ public class MainManager : MonoBehaviour
     {
         // ★リリース時に自分のIDに変更する
         #if UNITY_IOS
-            string adUnitId = AdmobVariableScript.GetIPHONE_STAGE_TRANS_INTERSTITIAL();
+            string adUnitId = AdmobVariable.GetIPHONE_STAGE_TRANS_INTERSTITIAL();
         #else
             string adUnitId = "unexpected_platform";
         #endif
@@ -161,7 +161,7 @@ public class MainManager : MonoBehaviour
     {
         // ★リリース時に自分のIDに変更する
         #if UNITY_IOS
-            string adUnitId = AdmobVariableScript.GetIPHONE_HINT_INTERSTITIAL();
+            string adUnitId = AdmobVariable.GetIPHONE_HINT_INTERSTITIAL();
         #else
             string adUnitId = "unexpected_platform";
         #endif
@@ -217,7 +217,7 @@ public class MainManager : MonoBehaviour
         
         // 次のシーンに遷移
         if(hintFlag == true) {
-            gamePlayCount = Mathf.Max(0, gamePlayCount-3);
+            gamePlayCount = Mathf.Max(0, gamePlayCount-2);
             hintFlag = false;
             audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
             RequestHintInterstitial();

@@ -18,6 +18,8 @@ public class StartManager : MonoBehaviour
     [SerializeField] GameObject dataResetFinishPanel;
     [SerializeField] GameObject fadeImage;
 
+    [SerializeField] AudioSource decisionSoundEffect;
+
     bool fadeInFlag = true;
     bool fadeOutFlag = false;
     float fadeTimeCount = 1.0f;
@@ -46,6 +48,13 @@ public class StartManager : MonoBehaviour
 
         string stageNameUnlock = "UnlockStage0_0";
         PlayerPrefs.SetInt(stageNameUnlock, 1);
+
+    }
+
+    public void soundSE(bool argSEFlag) {
+        if(!argSEFlag) {
+            decisionSoundEffect.GetComponent<AudioSource>().PlayOneShot(decisionSoundEffect.GetComponent<AudioSource>().clip);
+        }
     }
 
     void Update()
@@ -77,17 +86,20 @@ public class StartManager : MonoBehaviour
 
     public void OnClickStartButton()
     {
+        soundSE(new AudioManager().GetSEFlag());
         fadeOutFlag = true;
         fadeImage.SetActive(true);
     }
 
     public void OnClickDataResetButton() {
+        soundSE(new AudioManager().GetSEFlag());
         if (!dataResetPanel.activeSelf) {
             dataResetPanel.SetActive(true);
         }
     }
 
     public void OnClickDataResetYesButton() {
+        soundSE(new AudioManager().GetSEFlag());
         for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
             for(int tempStageId = 0; tempStageId < stageNumber; tempStageId++) {
                 string stageName = "StageScore" + tempDifficulty.ToString() + "_" + tempStageId.ToString();
@@ -102,10 +114,12 @@ public class StartManager : MonoBehaviour
     }
     
     public void OnClickDataResetNoButton() {
+        soundSE(new AudioManager().GetSEFlag());
         dataResetPanel.SetActive(false);
     }
 
     public void OnClickDataResetFinishButton() {
+        soundSE(new AudioManager().GetSEFlag());
         dataResetFinishPanel.SetActive(false);
     }
 }

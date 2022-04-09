@@ -152,10 +152,9 @@ public class StageSelectManager : MonoBehaviour
                     if(stageName == "StageScore0_0") stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(true);
                     else stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(false);
 
-                    // もしscoreが1以上だったらクリアマークを付ける
-                    GameObject stageCloneChildStageButtonClearImage = stageCloneChildStageButton.transform.Find("StageClearImage").gameObject;
-                    if(stageScore > 0) stageCloneChildStageButtonClearImage.SetActive(true);
-                    else stageCloneChildStageButtonClearImage.SetActive(false);
+                    // scoreに応じてクリアマークを付ける
+                    string scoreName = "Score" + stageScore.ToString();
+                    stageCloneChildStageButton.transform.Find(scoreName).gameObject.SetActive(true);
 
                 }
             }

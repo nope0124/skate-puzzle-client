@@ -31,6 +31,7 @@ public class Board : MonoBehaviour
         new int[] {3, 1, 2, 1, 3, 0, 2, 0, 3, 1, 3, 0, 2, 1, 2},
         new int[] {3, 1, 2, 1, 3, 0, 3, 0, 2, 1, 2, 0, 2, 1, 2, 0, 3, 0},
     };
+    
 
     private readonly int[][] NORMAL_HINT = new int[][] {
         new int[] {3, 1, 3, 0, 2, 1, 3, 0, 3, 0, 3, 1, 2, 1, 2},
@@ -48,6 +49,42 @@ public class Board : MonoBehaviour
         new int[] {1, 3, 0, 2, 0, 2, 1, 3, 1, 2, 0, 3, 1, 3, 0, 2, 0, 2, 1},
         new int[] {1, 3, 1, 3, 0, 2, 1, 2, 0, 3, 0, 3, 0, 2, 0, 2, 1, 2, 0},
         new int[] {1, 3, 1, 3, 0, 2, 0, 2, 1, 2, 0, 3, 0, 2, 1, 3, 0, 3, 0, 2},
+    };
+
+    private readonly int[] EASY_OPT_MOVES = new int[] {
+        3,
+        5,
+        10,
+        8,
+        12,
+        10,
+        15,
+        13,
+        14,
+        12,
+        16,
+        14,
+        14,
+        15,
+        18,
+    };
+
+    private readonly int[] NORMAL_OPT_MOVES = new int[] {
+        15,
+        14,
+        18,
+        17,
+        21,
+        23,
+        18,
+        20,
+        8,
+        17,
+        17,
+        20,
+        19,
+        19,
+        20,
     };
     
     private readonly char[][][] EASY_BOARD = new char[][][] {
@@ -566,6 +603,17 @@ public class Board : MonoBehaviour
             return EASY_HINT[argStageNumber];
         }else {
             return NORMAL_HINT[argStageNumber];
+        // }else {
+        //     return HARD_BOARD[argStageNumber];
+        // }
+        }
+    }
+
+    public int GetOptMoves(int argDifficulty, int argStageNumber) {
+        if(argDifficulty == 0) {
+            return EASY_OPT_MOVES[argStageNumber];
+        }else {
+            return NORMAL_OPT_MOVES[argStageNumber];
         // }else {
         //     return HARD_BOARD[argStageNumber];
         // }

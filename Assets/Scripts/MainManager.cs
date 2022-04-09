@@ -14,7 +14,6 @@ public class MainManager : MonoBehaviour
     float EPS = 1e-5f;
 
     private BannerView defaultBannerView;
-    private BannerView pauseBannerView;
     private InterstitialAd stageTransInterstitialAd;
     private InterstitialAd hintInterstitialAd;
 
@@ -56,6 +55,11 @@ public class MainManager : MonoBehaviour
 
     [SerializeField] AudioSource audioSource;
     [SerializeField] AudioSource decisionSoundEffect;
+
+    [SerializeField] Text stageIdText;
+    [SerializeField] Text turnCountText;
+
+    [SerializeField] GameObject[] clearScore;
     
 
 
@@ -93,11 +97,15 @@ public class MainManager : MonoBehaviour
     float fadeTimeCount = 1.0f;
 
     bool hintFlag = false;
+    bool hintMemoryFlag = false;
     static int gamePlayCount = 0;
     int adPlayBorderCount = 9;
     bool nextFlag = false;
+    bool backFlag = false;
 
     Stack<int> hintMovesStack = new Stack<int>();
+
+    int turnCount = 0;
 
 
     private void RequestDefaultBanner()
@@ -108,24 +116,10 @@ public class MainManager : MonoBehaviour
             string adUnitId = "unexpected_platform";
         #endif
 
-        defaultBannerView = new BannerView(adUnitId, AdSize.IABBanner, AdPosition.Bottom);
+        defaultBannerView = new BannerView(adUnitId, AdSize.IABBanner, AdPosition.Top);
         AdRequest request = new AdRequest.Builder().Build();
 
         defaultBannerView.LoadAd(request);
-    }
-
-    private void RequestPauseBanner()
-    {
-        #if UNITY_IOS
-            string adUnitId = AdmobVariable.GetIPHONE_PAUSE_BANNER();
-        #else
-            string adUnitId = "unexpected_platform";
-        #endif
-
-        pauseBannerView = new BannerView(adUnitId, AdSize.MediumRectangle, AdPosition.Center);
-        AdRequest request = new AdRequest.Builder().Build();
-
-        pauseBannerView.LoadAd(request);
     }
 
     private void RequestStageTransInterstitial()
@@ -203,7 +197,11 @@ public class MainManager : MonoBehaviour
     public void HandleOnAdFailedToLoad(object sender, AdFailedToLoadEventArgs args)
     {
         // 次のシーンに遷移
-        SceneManager.LoadScene("StageSelect");
+        gamePlayCount = 0;
+        audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
+        if(backFlag == true) {
+            SceneManager.LoadScene("StageSelect");
+        }
     }
 
     // 広告がデバイスの画面いっぱいに表示されたとき
@@ -277,7 +275,15 @@ public class MainManager : MonoBehaviour
         Time.timeScale = 1.0f;
         clearFlag = false;
         hintFlag = false;
+        hintMemoryFlag = false;
         hintMovesStack.Clear();
+
+        stageIdText.text = "STAGE: " + currentStageId.ToString("000");
+        turnCount = 0;
+
+        for(int i = 0; i < 3; i++) {
+            clearScore[i].SetActive(false);
+        }
 
         ButtonHintReset();
 
@@ -404,7 +410,7 @@ public class MainManager : MonoBehaviour
     void Update()
     {
         if(gamePlayCount >= 20) gamePlayCount = 20;
-
+        turnCountText.text = "TURN: " + turnCount.ToString("000");
         if(fadeInFlag) {
             fadeTimeCount -= Time.deltaTime * 2;
             fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Max(0.0f, fadeTimeCount));
@@ -431,6 +437,7 @@ public class MainManager : MonoBehaviour
                     audioSource.GetComponent<AudioSource>().mute = true;
                     stageTransInterstitialAd.Show();
                     fadeOutFlag = false;
+                    backFlag = true;
                 }else {
                     SceneManager.LoadScene("StageSelect");
                 }
@@ -440,21 +447,31 @@ public class MainManager : MonoBehaviour
 
 
         if(isFinish && (player.transform.position - goalPosition).magnitude <= EPS) { //ゴールに着いている状態
-            if(clearFlag == false) {
+            if(clearFlag == false) { //1回だけ
                 playerAnim.SetFloat("MovingSpeed", 0.0f);
-
 
                 AnimatorReset();
                 playerAnim.SetBool("ToDown", true);
 
-
-                RequestPauseBanner();
+                // RequestPauseBanner();
                 clearPanel.SetActive(true);
-
 
                 string stageName = "StageScore" + currentDifficulty.ToString() + "_" + currentStageId.ToString();
                 string stageNameUnlock = "UnlockStage" + ((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber).ToString() + "_" + ((currentStageId+1) % stageNumber).ToString();
-                PlayerPrefs.SetInt(stageName, 1);
+                int tempScore = PlayerPrefs.GetInt(stageName, 0);
+                if(hintMemoryFlag) {
+                    clearScore[0].SetActive(true);
+                    PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
+                }else if(turnCount <= new Board().GetOptMoves(currentDifficulty, currentStageId)) {
+                    clearScore[2].SetActive(true);
+                    PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
+                }else if(turnCount <= new Board().GetOptMoves(currentDifficulty, currentStageId)*2) {
+                    clearScore[1].SetActive(true);
+                    PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
+                }else {
+                    clearScore[0].SetActive(true);
+                    PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
+                }
                 if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) PlayerPrefs.SetInt(stageNameUnlock, 1);
 
 
@@ -528,6 +545,7 @@ public class MainManager : MonoBehaviour
         if(reachedSnowBall) return;
         if(hintMovesStack.Count > 0) {
             if(i == hintMovesStack.Peek()) {
+                if(turnCount < 999) turnCount++;
                 MovePlayer(i);
                 AnimatorReset();
                 if(i == 0) {
@@ -546,6 +564,7 @@ public class MainManager : MonoBehaviour
                 return;
             }
         }else {
+            if(turnCount < 999) turnCount++;
             MovePlayer(i);
             AnimatorReset();
             if(i == 0) {
@@ -564,8 +583,7 @@ public class MainManager : MonoBehaviour
     public void OnClickPauseButton() {
         soundSE(new AudioManager().GetSEFlag());
         if(isFinish) return;
-        RequestPauseBanner();
-        if (!pausePanel.activeSelf) {
+        if(!pausePanel.activeSelf) {
             pausePanel.SetActive(true);
             Time.timeScale = 0.0f;
         }
@@ -573,10 +591,10 @@ public class MainManager : MonoBehaviour
 
     public void OnClickBackButton() {
         soundSE(new AudioManager().GetSEFlag());
+        backFlag = true;
         fadeImage.SetActive(true);
         fadeOutFlag = true;
         defaultBannerView.Destroy();
-        pauseBannerView.Destroy();
     }
 
     public void OnClickRetryButton() {
@@ -584,14 +602,12 @@ public class MainManager : MonoBehaviour
         gamePlayCount++;
         Init();
         pausePanel.SetActive(false);
-        pauseBannerView.Destroy();
         Time.timeScale = 1.0f;
     }
 
     public void OnClickPlayButton() {
         soundSE(new AudioManager().GetSEFlag());
         pausePanel.SetActive(false);
-        pauseBannerView.Destroy();
         Time.timeScale = 1.0f;
     }
 
@@ -641,12 +657,12 @@ public class MainManager : MonoBehaviour
         currentDifficulty = (currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber;
         currentStageId = (currentStageId+1) % stageNumber;
         Init();
+        hintMemoryFlag = false;
         if(gamePlayCount >= adPlayBorderCount) {
             nextFlag = true;
             audioSource.GetComponent<AudioSource>().mute = true;
             stageTransInterstitialAd.Show();
         }
-        pauseBannerView.Destroy();
     }
 
 

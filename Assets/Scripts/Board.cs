@@ -6,7 +6,7 @@ public class Board : MonoBehaviour
 {
     // IceFloor  -> .
     // IceBlock  -> x
-    // SnoqBall  -> @
+    // SnowBall  -> @
     // SnowFloor -> o
     // Start     -> S
     // Goal      -> G

@@ -198,9 +198,13 @@ int main() {
     board = p.first;
     dist = p.second;
     int cnt = 0;
-    rep(i, H) rep(j, W) if(board[i][j] == 'x' || board[i][j] == 'o') cnt++;
+    rep(i, H) {
+      rep(j, W) {
+        if(dist[i][j] != -1) cnt++;
+      }
+    }
     // if(dist[gy][gx] >= 10 && cnt <= 20) break;
-    if(dist[gy][gx] <= 1 || cnt >= H*2) continue;
+    if(cnt <= H*W/3+2*H || dist[gy][gx] <= H) continue;
     // if(ave_random_walk(board) >= 1000) {
       rep(i, H) {
         rep(j, W) {

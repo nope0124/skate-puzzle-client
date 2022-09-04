@@ -1,0 +1,37 @@
+{
+  "project_info": {
+    "project_number": "883253699510",
+    "firebase_url": "https://forunity-c0f8c-default-rtdb.firebaseio.com",
+    "project_id": "forunity-c0f8c",
+    "storage_bucket": "forunity-c0f8c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:883253699510:ios:735168d6dc87ab0b361717",
+        "android_client_info": {
+          "package_name": "com.nopera.SkatePuzzle"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "883253699510-3n1kbqek0g1enug05nc40af1hgkeqqdi.apps.googleusercontent.com"
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-8I5dSnPtcKr_WEvwc7A1zuzdIB4nV_A"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 0
+        },
+        "appinvite_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -5,6 +5,8 @@ using UnityEngine.UI;
 using UnityEngine.Tilemaps;
 using UnityEngine.SceneManagement;
 using GoogleMobileAds.Api;
+using Firebase;
+using Firebase.Database;
 
 public class MainManager : MonoBehaviour
 {
@@ -62,6 +64,8 @@ public class MainManager : MonoBehaviour
     [SerializeField] Text turnCountText;
 
     [SerializeField] GameObject[] clearScore;
+
+    [SerializeField] GameObject eventSystem;
     
 
 
@@ -102,18 +106,21 @@ public class MainManager : MonoBehaviour
     static int gamePlayCount = 0;
     int adPlayBorderCount = 7;
     bool nextFlag = false;
-    bool backFlag = false;
+    // bool backFlag = false;
     bool moveFlag = false;
 
     Queue<int> hintMovesStack = new Queue<int>();
 
     int turnCount = 0;
+    // string userId = "";
+    // DatabaseReference scoreReference;
+    string[] difficultyName;
 
 
     private void RequestDefaultBanner()
     {
         #if UNITY_IOS
-            string adUnitId = AdmobVariable.GetIPHONE_DEFAULT_BANNER();
+            string adUnitId = Const.CO.IPHONE_DEFAULT_BANNER;
         #else
             string adUnitId = "unexpected_platform";
         #endif
@@ -128,7 +135,7 @@ public class MainManager : MonoBehaviour
     {
         // ★リリース時に自分のIDに変更する
         #if UNITY_IOS
-            string adUnitId = AdmobVariable.GetIPHONE_STAGE_TRANS_INTERSTITIAL();
+            string adUnitId = Const.CO.IPHONE_STAGE_TRANS_INTERSTITIAL;
         #else
             string adUnitId = "unexpected_platform";
         #endif
@@ -175,10 +182,10 @@ public class MainManager : MonoBehaviour
         audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
         RequestStageTransInterstitial();
         hintFlag = false;
-        if(backFlag == true) {
-            backFlag = false;
-            SceneManager.LoadScene("StageSelect");
-        }
+        // if(backFlag == true) {
+        //     backFlag = false;
+        //     SceneManager.LoadScene("StageSelect");
+        // }
 
     }
 
@@ -263,10 +270,10 @@ public class MainManager : MonoBehaviour
 
         ButtonHintReset();
 
-        // フェードイン
-        fadeImage.SetActive(true);
-        fadeInFlag = true;
-        fadeOutFlag = false;
+        // // フェードイン
+        // fadeImage.SetActive(true);
+        // fadeInFlag = true;
+        // fadeOutFlag = false;
 
         // BGMの設定
         if(new AudioManager().GetBGMFlag()) {
@@ -385,7 +392,12 @@ public class MainManager : MonoBehaviour
 
     void Start()
     {
+        // userId = PlayerPrefs.GetString("user_id");
+        // FirebaseApp.DefaultInstance.SetEditorDatabaseUrl(Const.CO.DATABASE_URL); // データベースのURLを設定
+        // DatabaseReference scoreReference = FirebaseDatabase.DefaultInstance.RootReference.Child("users").Child(userId).Child("scores");
         MobileAds.Initialize(initStatus => { });
+        RequestDefaultBanner();
+        RequestStageTransInterstitial();
         // 盤面のサイズを取得
         // 盤面のサイズを調整
         // 盤面の状態をコピー
@@ -399,44 +411,29 @@ public class MainManager : MonoBehaviour
     {
         if(gamePlayCount >= 20) gamePlayCount = 20;
         turnCountText.text = "TURN: " + turnCount.ToString("000");
-        if(fadeInFlag) {
-            fadeTimeCount -= Time.deltaTime * 2;
-            fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Max(0.0f, fadeTimeCount));
-            if(fadeTimeCount < 0.0f-EPS) {
-                fadeTimeCount = 0.0f;
-                fadeImage.SetActive(false);
-                fadeInFlag = false;
-                
-                // 広告の生成
-                RequestDefaultBanner();
-                RequestStageTransInterstitial();
-            }
-            return;
-        }
 
-
-        if(fadeOutFlag) {
-            Time.timeScale = 1.0f;
-            fadeTimeCount += Time.deltaTime * 2;
-            fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Min(1.0f, fadeTimeCount));
-            if(fadeTimeCount > 1.0f+EPS) {
-                fadeTimeCount = 1.0f;
-                if(stageTransInterstitialAd.IsLoaded() && gamePlayCount >= adPlayBorderCount) {
-                    audioSource.GetComponent<AudioSource>().mute = true;
-                    stageTransInterstitialAd.Show();
-                    fadeOutFlag = false;
-                    backFlag = true;
-                }else {
-                    SceneManager.LoadScene("StageSelect");
-                }
-            }
-            return;
-        }
+        
+        // if(fadeOutFlag) {
+        //     Time.timeScale = 1.0f;
+        //     fadeTimeCount += Time.deltaTime * 2;
+        //     fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Min(1.0f, fadeTimeCount));
+        //     if(fadeTimeCount > 1.0f+EPS) {
+        //         fadeTimeCount = 1.0f;
+        //         if(stageTransInterstitialAd.IsLoaded() && gamePlayCount >= adPlayBorderCount) {
+        //             audioSource.GetComponent<AudioSource>().mute = true;
+        //             stageTransInterstitialAd.Show();
+        //             fadeOutFlag = false;
+        //             backFlag = true;
+        //         }else {
+        //             SceneManager.LoadScene("StageSelect");
+        //         }
+        //     }
+        //     return;
+        // }
 
 
         if(isFinish && (player.transform.position - goalPosition).magnitude <= EPS) { //ゴールに着いている状態
             if(clearFlag == false) { //1回だけ
-
                 
                 playerAnim.SetFloat("MovingSpeed", 0.0f);
 
@@ -447,23 +444,51 @@ public class MainManager : MonoBehaviour
                 clearPanel.SetActive(true);
 
                 string stageName = "StageScore" + currentDifficulty.ToString() + "_" + currentStageId.ToString();
-                string stageNameUnlock = "UnlockStage" + ((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber).ToString() + "_" + ((currentStageId+1) % stageNumber).ToString();
+                string stageNameUnlock = "StageScore" + ((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber).ToString() + "_" + ((currentStageId+1) % stageNumber).ToString();
                 int tempScore = PlayerPrefs.GetInt(stageName, 0);
                 int distance = new Solver().GetOptMoves(stageBoardGrid);
-                if(turnCount <= distance) {
-                    soundClearSE(new AudioManager().GetSEFlag());
-                    clearScore[2].SetActive(true);
-                    PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
-                }else if(turnCount <= distance*2) {
-                    clearScore[1].SetActive(true);
-                    PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
+                string userId = PlayerPrefs.GetString("user_id");
+                if(userId == "") {
+                    if(turnCount <= distance) {
+                        soundClearSE(new AudioManager().GetSEFlag());
+                        clearScore[2].SetActive(true);
+                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
+                    }else if(turnCount <= distance*2) {
+                        clearScore[1].SetActive(true);
+                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
+                    }else {
+                        clearScore[0].SetActive(true);
+                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
+                    }
+                    if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) {
+                        PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(0, PlayerPrefs.GetInt(stageNameUnlock)));
+                    }
                 }else {
-                    clearScore[0].SetActive(true);
-                    PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
+                    FirebaseDatabase.GetInstance(Const.CO.DATABASE_URL); // データベースのURLを設定
+                    // FirebaseApp.DefaultInstance.SetEditorDatabaseUrl(Const.CO.DATABASE_URL); // データベースのURLを設定
+                    DatabaseReference databaseRoot = FirebaseDatabase.DefaultInstance.RootReference; // ルートを作成
+                    DatabaseReference scoreReference = databaseRoot.Child("users").Child(userId).Child("scores");
+                    Dictionary<string, object> childUpdates = new Dictionary<string, object>();
+                    difficultyName = new string[]{"easy", "normal", "hard"};
+                    if(turnCount <= distance) {
+                        soundClearSE(new AudioManager().GetSEFlag());
+                        clearScore[2].SetActive(true);
+                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
+                    }else if(turnCount <= distance*2) {
+                        clearScore[1].SetActive(true);
+                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
+                    }else {
+                        clearScore[0].SetActive(true);
+                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
+                    }
+                    childUpdates["/"+difficultyName[currentDifficulty]+"/"+currentStageId.ToString()] = PlayerPrefs.GetInt(stageName);
+                    if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) {
+                        PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(0, PlayerPrefs.GetInt(stageNameUnlock)));
+                        childUpdates["/"+difficultyName[(currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber]+"/"+((currentStageId+1) % stageNumber).ToString()] = PlayerPrefs.GetInt(stageNameUnlock);
+                    }
+                    scoreReference.UpdateChildrenAsync(childUpdates);
                 }
-                if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) PlayerPrefs.SetInt(stageNameUnlock, 1);
-
-
+            
                 clearFlag = true;
             }
         }else if(reachedSnowBall && (player.transform.position - targetPosition).magnitude <= EPS) { // 雪玉に当たった状態
@@ -564,10 +589,10 @@ public class MainManager : MonoBehaviour
 
     public void OnClickBackButton() {
         soundDecisionSE(new AudioManager().GetSEFlag());
-        backFlag = true;
-        fadeImage.SetActive(true);
-        fadeOutFlag = true;
+        Time.timeScale = 1.0f;
         defaultBannerView.Destroy();
+        eventSystem.SetActive(false);
+        FadeManager.Instance.LoadScene(0.5f, "StageSelect");
     }
 
     public void OnClickRetryButton() {
@@ -609,8 +634,6 @@ public class MainManager : MonoBehaviour
             audioSource.GetComponent<AudioSource>().mute = true;
             stageTransInterstitialAd.Show();
         }
-        
-        
         
         Stack<int> HINT = new Solver().Solve(currentStageBoardGrid, currentPlayerXOnBoard, currentPlayerYOnBoard);
         hintMovesStack.Clear();

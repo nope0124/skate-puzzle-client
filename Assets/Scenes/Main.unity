@@ -2516,6 +2516,7 @@ MonoBehaviour:
   - {fileID: 292750556}
   - {fileID: 1885621997}
   - {fileID: 420438926}
+  eventSystem: {fileID: 686012682}
   moveSpeed: 3
 --- !u!1 &840723661
 GameObject:

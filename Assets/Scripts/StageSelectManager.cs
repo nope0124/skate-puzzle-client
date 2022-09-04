@@ -54,21 +54,17 @@ public class StageSelectManager : MonoBehaviour
     [SerializeField] GameObject bgmButton;
     [SerializeField] GameObject seButton;
 
-    [SerializeField] GameObject fadeImage;
-
     GameObject[] difficultyUI;
     GameObject[] selectLight;
 
-    bool fadeOutFlagToStart = false;
+    [SerializeField] GameObject eventSystem;
     static bool fadeOutFlagToMain = false;
-    bool fadeInFlag = true;
-    float fadeTimeCount = 1.0f;
     
 
-    void requestDefaultBanner()
+    void RequestDefaultBanner()
     {
         #if UNITY_IOS
-            string adUnitId = AdmobVariable.GetIPHONE_DEFAULT_BANNER();
+            string adUnitId = Const.CO.IPHONE_DEFAULT_BANNER;
         #else
             string adUnitId = "unexpected_platform";
         #endif
@@ -76,7 +72,6 @@ public class StageSelectManager : MonoBehaviour
         defaultBannerView = new BannerView(adUnitId, AdSize.IABBanner, AdPosition.Bottom);
         AdRequest request = new AdRequest.Builder().Build();
 
-        MobileAds.Initialize(initStatus => { });
         defaultBannerView.LoadAd(request);
     }
 
@@ -84,13 +79,8 @@ public class StageSelectManager : MonoBehaviour
 
     void Start()
     {
-        PlayerPrefs.SetInt("UnlockStage0_0", 1);
-        // フェードイン
-        fadeImage.SetActive(true);
-        fadeInFlag = true;
-        fadeOutFlagToMain = false;
-        fadeOutFlagToStart = false;
-
+        MobileAds.Initialize(initStatus => { });
+        RequestDefaultBanner();
 
         // BGMの設定
         if(new AudioManager().GetBGMFlag()) {
@@ -139,23 +129,21 @@ public class StageSelectManager : MonoBehaviour
 
                     // もし1個前のステージがクリアしてなかったら鍵をかける
                     GameObject stageCloneChildStageLockImage = stageClone.transform.Find("StageLockImage").gameObject;
-                    string stageNameUnlock = "UnlockStage" + tempDifficulty.ToString() + "_" + tempStageId.ToString();
-                    if(PlayerPrefs.GetInt(stageNameUnlock, 0) == 1) {
+                    if(PlayerPrefs.GetInt(stageName, -1) >= 0) {
                         stageCloneChildStageLockImage.SetActive(false);
                         stageCloneChildStageButton.SetActive(true);
+                        // scoreに応じてクリアマークを付ける
+                        string scoreName = "Score" + stageScore.ToString();
+                        stageCloneChildStageButton.transform.Find(scoreName).gameObject.SetActive(true);
                     }else {
                         stageCloneChildStageLockImage.SetActive(true);
                         stageCloneChildStageButton.SetActive(false);
                     }
-
                     // 初心者用ステージの調整
                     if(stageName == "StageScore0_0") stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(true);
                     else stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(false);
 
-                    // scoreに応じてクリアマークを付ける
-                    string scoreName = "Score" + stageScore.ToString();
-                    stageCloneChildStageButton.transform.Find(scoreName).gameObject.SetActive(true);
-
+                    
                 }
             }
             // 最後に大元のレイヤーに付ける
@@ -184,65 +172,55 @@ public class StageSelectManager : MonoBehaviour
 
     void Update()
     {
-        if(fadeInFlag) {
-            fadeTimeCount -= Time.deltaTime * 2;
-            fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Max(0.0f, fadeTimeCount));
-            if(fadeTimeCount < 0.0f-EPS) {
-                fadeTimeCount = 0.0f;
-                fadeImage.SetActive(false);
-                fadeInFlag = false;
-                
-                // 広告の生成
-                requestDefaultBanner();
-            }
-            return;
-        }
-        if(fadeOutFlagToMain || fadeOutFlagToStart) {
+        if(fadeOutFlagToMain == true) {
+            fadeOutFlagToMain = false;
+            eventSystem.SetActive(false);
             defaultBannerView.Destroy();
-            fadeImage.SetActive(true);
-            fadeTimeCount += Time.deltaTime * 2;
-            fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Min(1.0f, fadeTimeCount));
-            if (fadeTimeCount > 1.0f+EPS) {
-                fadeTimeCount = 1.0f;
-                if(fadeOutFlagToStart) SceneManager.LoadScene("Start");
-                if(fadeOutFlagToMain)  SceneManager.LoadScene("Main");
-            }
-            return;
-        }
-
-        for(int num = 0; num < difficultyNumber; num++) {
-            if(num == currentDifficulty) difficultyUI[num].SetActive(true);
-            else difficultyUI[num].SetActive(false);
+            FadeManager.Instance.LoadScene(0.5f, "Main");
         }
     }
-
+    
+    /// <summary>
+    /// 効果音を鳴らす
+    /// </summary>
     public void soundSE(bool argSEFlag) {
         if(!argSEFlag) {
             decisionSoundEffect.GetComponent<AudioSource>().PlayOneShot(decisionSoundEffect.GetComponent<AudioSource>().clip);
         }
     }
 
-    public void OnClickStageEasierButton() {
+    /// <summary>
+    /// 難易度ボタン
+    /// </summary>
+    /// <param name="diff">-1か+1か</param>
+    public void OnClickStageLevelButton(int diff) {
         soundSE(new AudioManager().GetSEFlag());
-        selectLight[currentDifficulty].GetComponent<Image>().sprite = notSelectLightSprite;
-        currentDifficulty = (currentDifficulty+difficultyNumber-1)%difficultyNumber;
-        selectLight[currentDifficulty].GetComponent<Image>().sprite = selectLightSprite;
+        currentDifficulty = (currentDifficulty+difficultyNumber+diff)%difficultyNumber;
+        for(int num = 0; num < difficultyNumber; num++) {
+            if(num == currentDifficulty) {
+                difficultyUI[currentDifficulty].SetActive(true);
+                selectLight[currentDifficulty].GetComponent<Image>().sprite = selectLightSprite;
+            }else {
+                difficultyUI[num].SetActive(false);
+                selectLight[num].GetComponent<Image>().sprite = notSelectLightSprite;
+            }
+        }
     }
 
-    public void OnClickStageHarderButton() {
-        soundSE(new AudioManager().GetSEFlag());
-        selectLight[currentDifficulty].GetComponent<Image>().sprite = notSelectLightSprite;
-        currentDifficulty = (currentDifficulty+1)%difficultyNumber;
-        selectLight[currentDifficulty].GetComponent<Image>().sprite = selectLightSprite;
-    }
-
+    /// <summary>
+    /// スタート画面に戻る
+    /// </summary>
     public void OnClickHomeButton() {
         soundSE(new AudioManager().GetSEFlag());
-        fadeImage.SetActive(true);
-        fadeOutFlagToStart = true;
+        eventSystem.SetActive(false);
+        FadeManager.Instance.LoadScene(0.5f, "Start");
         defaultBannerView.Destroy();
     }
 
+
+    /// <summary>
+    /// BGMのオンオフ
+    /// </summary>
     public void OnClickBGMButton() {
         soundSE(new AudioManager().GetSEFlag());
         new AudioManager().SetBGMFlag(!(new AudioManager().GetBGMFlag()));
@@ -254,6 +232,10 @@ public class StageSelectManager : MonoBehaviour
         audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
     }
 
+
+    /// <summary>
+    /// SEのオンオフ
+    /// </summary>
     public void OnClickSEButton() {
         soundSE(new AudioManager().GetSEFlag());
         new AudioManager().SetSEFlag(!(new AudioManager().GetSEFlag()));

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using GoogleMobileAds.Api;
 
@@ -59,6 +60,9 @@ public class StageSelectManager : MonoBehaviour
 
     [SerializeField] GameObject eventSystem;
     static bool fadeOutFlagToMain = false;
+
+
+    [SerializeField] GameObject Test;
     
 
     void RequestDefaultBanner()
@@ -75,14 +79,14 @@ public class StageSelectManager : MonoBehaviour
         defaultBannerView.LoadAd(request);
     }
 
-
-
-    void Start()
+    [System.Serializable]
+    public class UserProgressData
     {
-        MobileAds.Initialize(initStatus => { });
-        RequestDefaultBanner();
+        public int[] progresses;
+    }
 
-        // BGMの設定
+    // BGMの設定
+    void SetBGM() {
         if(new AudioManager().GetBGMFlag()) {
             audioSource.GetComponent<AudioSource>().mute = true;
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
@@ -90,19 +94,20 @@ public class StageSelectManager : MonoBehaviour
             audioSource.GetComponent<AudioSource>().mute = false;
             bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
         }
+    }
 
-        // SEの設定
+    // SEの設定
+    void SetSE() {
         if(new AudioManager().GetSEFlag()) {
             seButton.GetComponent<Image>().sprite = muteSESprite;
         }else {
             seButton.GetComponent<Image>().sprite = notMuteSESprite;
         }
+    }
 
-        // 難易度の個数を取得
-        difficultyUI = new GameObject[]{easyUI, normalUI, hardUI};
-        selectLight = new GameObject[difficultyNumber];
 
-        // ループでステージ生成
+    // ステージボタンの生成
+    void GenerateStageSelectButton(int[] progresses) {
         for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
             for(int y = 0; y < stageSelectHeightNumber; y++) {
                 for(int x = 0; x < stageSelectWidthNumber; x++) {
@@ -110,7 +115,8 @@ public class StageSelectManager : MonoBehaviour
                     // ステージID、ステージ名、スコアを定義
                     int tempStageId = y*stageSelectWidthNumber+x;
                     string stageName = "StageScore" + tempDifficulty.ToString() + "_" + tempStageId.ToString();
-                    int stageScore = PlayerPrefs.GetInt(stageName, 0);
+                    // int stageScore = PlayerPrefs.GetInt(stageName, 0);
+                    int stageScore = progresses[tempStageId + tempDifficulty * (stageSelectHeightNumber * stageSelectWidthNumber)];
 
                     // positionを定めてステージを生成、難易度別の親に付ける
                     float stageClonePositionX = stageSelectWidthCenter+stageSelectWidth/(stageSelectWidthNumber-1)*x-stageSelectWidth/2.0f;
@@ -129,7 +135,8 @@ public class StageSelectManager : MonoBehaviour
 
                     // もし1個前のステージがクリアしてなかったら鍵をかける
                     GameObject stageCloneChildStageLockImage = stageClone.transform.Find("StageLockImage").gameObject;
-                    if(PlayerPrefs.GetInt(stageName, -1) >= 0) {
+                    // if(PlayerPrefs.GetInt(stageName, -1) >= 0) {
+                    if(stageScore >= 0) {
                         stageCloneChildStageLockImage.SetActive(false);
                         stageCloneChildStageButton.SetActive(true);
                         // scoreに応じてクリアマークを付ける
@@ -142,17 +149,18 @@ public class StageSelectManager : MonoBehaviour
                     // 初心者用ステージの調整
                     if(stageName == "StageScore0_0") stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(true);
                     else stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(false);
-
                     
                 }
             }
             // 最後に大元のレイヤーに付ける
             difficultyUI[tempDifficulty].transform.SetParent(buttonLayer.transform, false);
         }
+    }
 
-
+    
+    // セレクトライトの生成
+    void GenerateSelectLight() {
         for(int x = 0; x < selectLightWidthNumber; x++) {
-
             float selectLightClonePositionX = selectLightWidthCenter+selectLightWidth/(selectLightWidthNumber-1)*x-selectLightWidth/2.0f;
             float selectLightClonePositionY = selectLightHeightCenter;
             GameObject selectLightClone = Instantiate(selectLightPrefab, new Vector3(selectLightClonePositionX, selectLightClonePositionY, 0.0f), Quaternion.identity) as GameObject;
@@ -162,10 +170,77 @@ public class StageSelectManager : MonoBehaviour
             if(x == currentDifficulty) selectLight[x].GetComponent<Image>().sprite = selectLightSprite;
             else selectLight[x].GetComponent<Image>().sprite = notSelectLightSprite;
         }
+    }
 
+    
+    // 選択されている難易度のステージセレクト画面を表示
+    void DisplayStageSelectByDifficulty() {
         for(int num = 0; num < difficultyNumber; num++) {
-            if(num == currentDifficulty) difficultyUI[num].SetActive(true);
-            else difficultyUI[num].SetActive(false);
+            // 選択された難易度と同じ時Active
+            if(num == currentDifficulty) {
+                difficultyUI[num].SetActive(true);
+            }else {
+                difficultyUI[num].SetActive(false);
+            }
+        }
+    }
+
+    void Start()
+    {
+        MobileAds.Initialize(initStatus => { });
+        RequestDefaultBanner();
+
+        // BGMの設定
+        SetBGM();
+
+        // SEの設定
+        SetSE();
+
+        // 難易度の個数を取得
+        difficultyUI = new GameObject[]{easyUI, normalUI, hardUI};
+        selectLight = new GameObject[difficultyNumber];
+
+        // セレクトライトの設置
+        GenerateSelectLight();
+
+        // 選択されている難易度のステージセレクト画面を表示
+        DisplayStageSelectByDifficulty();
+
+        // // ループでステージ生成
+        // GenerateStageSelectButton();
+
+        StartCoroutine(GetUserData());
+    }
+
+    private string baseURL = "http://localhost:3000";
+    IEnumerator GetUserData()
+    {
+        string url = baseURL + "/api/v1/users/1";
+        UnityWebRequest request = UnityWebRequest.Get(url);
+        yield return request.SendWebRequest();
+
+        if (request.isNetworkError)
+        {
+            Debug.Log(request.error);
+        }
+        else
+        {
+            if(request.responseCode == 200)
+            {
+                // JSONデータをC#オブジェクトにデシリアライズ
+                UserProgressData data = JsonUtility.FromJson<UserProgressData>(request.downloadHandler.text);
+
+                // データの表示
+                foreach (int progress in data.progresses)
+                {
+                    Debug.Log(progress);
+                }
+                int[] progresses = data.progresses;
+                // ループでステージ生成
+                GenerateStageSelectButton(progresses);
+
+                Test.SetActive(false);
+            }
         }
     }
 

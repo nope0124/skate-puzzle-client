@@ -19,7 +19,7 @@ S....x
 x x 3 6 2 3 
 x x 4 5 x 6 
 6 7 x x 5 4 
-x x x x x x 
+x x x x x x
 0 x x x 1 x 
 
 5

@@ -14,11 +14,15 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+/[Ss]creenShot
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
 /[Mm]emoryCaptures/
 
+
+/Music
+/Pictures
 # Recordings can get excessive in size
 /[Rr]ecordings/
 
@@ -77,3 +81,8 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # End of https://www.toptal.com/developers/gitignore/api/unity
+
+/[Aa]ssets/[Ss]cripts/AdmobVariable.cs
+/[Aa]ssets/[Ss]cripts/Const.cs
+
+/[Aa]ssets/[Ff]irebase/GoogleService-Info.plist

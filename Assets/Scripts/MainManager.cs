@@ -305,6 +305,7 @@ public class MainManager : MonoBehaviour
         stageBoard.transform.SetParent(gridLayer.transform, false);
 
         // 盤面のサイズを取得
+        
         stageBoardGrid = new Board().GetBoard(currentDifficulty, currentStageId);
         stageBoardGridWidth = stageBoardGrid[0].Length;
         stageBoardGridHeight = stageBoardGrid.Length;

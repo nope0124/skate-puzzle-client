@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using GoogleMobileAds.Api;
 using Firebase;
@@ -29,6 +30,7 @@ public class StartManager : MonoBehaviour
     [SerializeField] GameObject dataResetFinishPanel;
     [SerializeField] GameObject eventSystem;
     [SerializeField] AudioSource decisionSoundEffect;
+    [SerializeField] GameObject Test;
 
     [Serializable]
     class UserSaveData : ISerializationCallbackReceiver
@@ -57,19 +59,19 @@ public class StartManager : MonoBehaviour
     private string userId;
     
 
-    void RequestDefaultBanner()
-    {
-        #if UNITY_IOS
-            string adUnitId = Const.CO.IPHONE_DEFAULT_BANNER;
-        #else
-            string adUnitId = "unexpected_platform";
-        #endif
+    // void RequestDefaultBanner()
+    // {
+    //     #if UNITY_IOS
+    //         string adUnitId = Const.CO.IPHONE_DEFAULT_BANNER;
+    //     #else
+    //         string adUnitId = "unexpected_platform";
+    //     #endif
 
-        defaultBannerView = new BannerView(adUnitId, AdSize.IABBanner, AdPosition.Bottom);
-        AdRequest request = new AdRequest.Builder().Build();
+    //     defaultBannerView = new BannerView(adUnitId, AdSize.IABBanner, AdPosition.Bottom);
+    //     AdRequest request = new AdRequest.Builder().Build();
 
-        defaultBannerView.LoadAd(request);
-    }
+    //     defaultBannerView.LoadAd(request);
+    // }
     
 
     void Awake()
@@ -100,6 +102,31 @@ public class StartManager : MonoBehaviour
             userId = _user.UserId;
             userLoginFlag = true;
             Debug.Log($"ログイン中: #{_user.UserId}");
+        }
+
+        StartCoroutine(GetData());
+    }
+
+    private string baseURL = "http://localhost:3000";
+
+    IEnumerator GetData()
+    {
+        string url = baseURL + "/stages/1";
+        UnityWebRequest request = UnityWebRequest.Get(url);
+        Debug.Log("呼び出し中");
+        yield return request.SendWebRequest();
+
+        if (request.isNetworkError)
+        {
+            Debug.Log(request.error);
+        }
+        else
+        {
+            if(request.responseCode == 200)
+            {
+                Debug.Log("OK");
+                Test.SetActive(false);
+            }
         }
     }
 
@@ -132,9 +159,10 @@ public class StartManager : MonoBehaviour
 
     void Start()
     {
-        MobileAds.Initialize(initStatus => { });
-        RequestDefaultBanner();
+        // MobileAds.Initialize(initStatus => { });
+        // RequestDefaultBanner();
         if(PlayerPrefs.GetInt("Version1_1", 0) == 0) ChangePlayerPrefs();
+        // if(PlayerPrefs.GetInt("v1_2", 0) == 0) ChangePlayerPrefs1_2();
     }
 
     void Update() {
@@ -189,7 +217,7 @@ public class StartManager : MonoBehaviour
     public void OnClickStartButton()
     {
         soundSE(new AudioManager().GetSEFlag());
-        defaultBannerView.Destroy();
+        // defaultBannerView.Destroy();
         eventSystem.SetActive(false);
         FadeManager.Instance.LoadScene(0.5f, "StageSelect");
     }
@@ -312,8 +340,5 @@ public class StartManager : MonoBehaviour
                 else if(tempDifficulty == 2) PlayerPrefs.SetInt(stageName, _hard[tempStageId]);
             }
         }
-
-            
     }
-
 }

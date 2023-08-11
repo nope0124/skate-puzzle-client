@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Tilemaps;
+using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using GoogleMobileAds.Api;
 using Firebase;
@@ -11,6 +12,7 @@ using Firebase.Database;
 public class MainManager : MonoBehaviour
 {
     // Left Right Up Down
+    private string baseURL = "http://localhost:3000";
     int[] dx = {-1, 1, 0, 0};
     int[] dy = {0, 0, 1, -1};
     string[] ANIMATOR_DIR = {"ToLeft", "ToRight", "ToUp", "ToDown"};
@@ -66,6 +68,8 @@ public class MainManager : MonoBehaviour
     [SerializeField] GameObject[] clearScore;
 
     [SerializeField] GameObject eventSystem;
+
+    [SerializeField] GameObject Test;
     
 
 
@@ -251,31 +255,7 @@ public class MainManager : MonoBehaviour
         }
     }
 
-
-    void Init() {
-
-        Time.timeScale = 1.0f;
-        clearFlag = false;
-        hintFlag = false;
-        moveFlag = false;
-        hintMovesStack.Clear();
-
-
-        stageIdText.text = "STAGE: " + (currentStageId+currentDifficulty*stageNumber).ToString("000");
-        turnCount = 0;
-
-        for(int i = 0; i < 3; i++) {
-            clearScore[i].SetActive(false);
-        }
-
-        ButtonHintReset();
-
-        // // フェードイン
-        // fadeImage.SetActive(true);
-        // fadeInFlag = true;
-        // fadeOutFlag = false;
-
-        // BGMの設定
+    void SetBGM() {
         if(new AudioManager().GetBGMFlag()) {
             audioSource.GetComponent<AudioSource>().mute = true;
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
@@ -283,50 +263,17 @@ public class MainManager : MonoBehaviour
             audioSource.GetComponent<AudioSource>().mute = false;
             bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
         }
+    }
 
-        // SEの設定
+    void SetSE() {
         if(new AudioManager().GetSEFlag()) {
             seButton.GetComponent<Image>().sprite = muteSESprite;
         }else {
             seButton.GetComponent<Image>().sprite = notMuteSESprite;
         }
+    }
 
-        
-
-
-        // プレイヤーのアニメーションをリセット
-        AnimatorReset();
-        playerAnim.SetFloat("MovingSpeed", 0.0f);
-        playerAnim.SetBool("ToDown", true);
-
-        // 盤面のタイルマップをリセット
-        Destroy(GameObject.Find("StageBoard(Clone)"));
-        stageBoard = Instantiate(stageBoardPrefab, new Vector3(0.0f, 0.0f, 0.0f), Quaternion.identity).GetComponent<Tilemap>();
-        stageBoard.transform.SetParent(gridLayer.transform, false);
-
-        // 盤面のサイズを取得
-        
-        stageBoardGrid = new Board().GetBoard(currentDifficulty, currentStageId);
-        stageBoardGridWidth = stageBoardGrid[0].Length;
-        stageBoardGridHeight = stageBoardGrid.Length;
-        stageBoardWidth = screenScale/stageBoardGridWidth;
-        stageBoardHeight = screenScale/stageBoardGridHeight;
-
-        // 盤面のサイズを調整
-        stageBoard.GetComponent<Transform>().position = new Vector3(-stageBoardGridWidth*stageBoardWidth/2.0f+stageBoardWidthCenter, -stageBoardGridHeight*stageBoardHeight/2.0f+stageBoardHeightCenter, 0.0f);
-        stageBoard.GetComponent<Transform>().localScale = new Vector3(stageBoardWidth, stageBoardHeight, 0.0f);
-
-        // 盤面の状態をコピー // ディープコピーの方法がわからない
-        currentStageBoardGrid = new char[stageBoardGridHeight][];
-        for(int i = 0; i < stageBoardGridHeight; i++) currentStageBoardGrid[i] = new char[stageBoardGridWidth];
-        for(int i = 0; i < stageBoardGridHeight; i++) {
-            for(int j = 0; j < stageBoardGridWidth; j++) {
-                currentStageBoardGrid[i][j] = stageBoardGrid[i][j];
-            }
-        }
-
-
-        // 盤面の状態を反映
+    void SetTiles() {
         for(int y = 0; y < stageBoardGridHeight; y++) {
             for(int x = 0; x < stageBoardGridWidth; x++) {
                 Vector3Int grid = new Vector3Int(x, y, 0);
@@ -362,15 +309,135 @@ public class MainManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    void GetBoardScale(int width, int height, string[] board) {
+        // stageBoardGrid = new Board().GetBoard(currentDifficulty, currentStageId);
+        stageBoardGrid = new char[height][];
+        for(int i = 0; i < height; i++) stageBoardGrid[i] = new char[width];
+        for(int y = 0; y < height; y++) {
+            for(int x = 0; x < width; x++) {
+                stageBoardGrid[y][x] = board[y][x];
+            }
+        }
+        stageBoardGridWidth = stageBoardGrid[0].Length;
+        stageBoardGridHeight = stageBoardGrid.Length;
+        stageBoardWidth = screenScale/stageBoardGridWidth;
+        stageBoardHeight = screenScale/stageBoardGridHeight;
+
+        // 盤面のサイズを調整
+        stageBoard.GetComponent<Transform>().position = new Vector3(-stageBoardGridWidth*stageBoardWidth/2.0f+stageBoardWidthCenter, -stageBoardGridHeight*stageBoardHeight/2.0f+stageBoardHeightCenter, 0.0f);
+        stageBoard.GetComponent<Transform>().localScale = new Vector3(stageBoardWidth, stageBoardHeight, 0.0f);
+    }
 
 
-        // プレイヤー位置の初期化
-        player.transform.position = new Vector3(startPointX+stageBoardWidth/2.0f, startPointY+stageBoardHeight/2.0f, 0.0f);
-        currentPlayerX = startPointX; currentPlayerXOnBoard = startPointXOnBoard;
-        currentPlayerY = startPointY; currentPlayerYOnBoard = startPointYOnBoard;
-        player.transform.localScale = new Vector3(stageBoardWidth, stageBoardHeight, 1.0f);
-        targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
-        goalPosition = new Vector3(goalPointX+stageBoardWidth/2.0f, goalPointY+stageBoardHeight/2.0f, 0.0f);
+    public class BoardData
+    {
+        public int width;
+        public int height;
+        public string[] board;
+    }
+
+    IEnumerator GetStageData(int stage_id)
+    {
+        string url = baseURL + "/api/v1/stages/" + stage_id.ToString();
+        Debug.Log(url);
+        UnityWebRequest request = UnityWebRequest.Get(url);
+        yield return request.SendWebRequest();
+
+        if (request.isNetworkError)
+        {
+            Debug.Log(request.error);
+        }
+        else
+        {
+            if(request.responseCode == 200)
+            {
+                // JSONデータをC#オブジェクトにデシリアライズ
+                BoardData data = JsonUtility.FromJson<BoardData>(request.downloadHandler.text);
+
+                Debug.Log(data.width);
+                Debug.Log(data.height);
+                Debug.Log(data.board);
+                GetBoardScale(data.width, data.height, data.board);
+                // 盤面の状態を反映
+                SetTiles();
+                // プレイヤー位置の初期化
+                player.transform.position = new Vector3(startPointX+stageBoardWidth/2.0f, startPointY+stageBoardHeight/2.0f, 0.0f);
+                currentPlayerX = startPointX; currentPlayerXOnBoard = startPointXOnBoard;
+                currentPlayerY = startPointY; currentPlayerYOnBoard = startPointYOnBoard;
+                player.transform.localScale = new Vector3(stageBoardWidth, stageBoardHeight, 1.0f);
+                targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
+                goalPosition = new Vector3(goalPointX+stageBoardWidth/2.0f, goalPointY+stageBoardHeight/2.0f, 0.0f);
+
+                Test.SetActive(false);
+            }
+        }
+    }
+
+
+    void Init() {
+
+        Time.timeScale = 1.0f;
+        clearFlag = false;
+        hintFlag = false;
+        moveFlag = false;
+        hintMovesStack.Clear();
+
+
+        stageIdText.text = "STAGE: " + (currentStageId+currentDifficulty*stageNumber).ToString("000");
+        turnCount = 0;
+
+        for(int i = 0; i < 3; i++) {
+            clearScore[i].SetActive(false);
+        }
+
+        ButtonHintReset();
+
+        // // フェードイン
+        // fadeImage.SetActive(true);
+        // fadeInFlag = true;
+        // fadeOutFlag = false;
+
+        // BGMの設定
+        SetBGM();
+
+        // SEの設定
+        SetSE();
+
+        // プレイヤーのアニメーションをリセット
+        AnimatorReset();
+        playerAnim.SetFloat("MovingSpeed", 0.0f);
+        playerAnim.SetBool("ToDown", true);
+
+        // 盤面のタイルマップをリセット
+        Destroy(GameObject.Find("StageBoard(Clone)"));
+        stageBoard = Instantiate(stageBoardPrefab, new Vector3(0.0f, 0.0f, 0.0f), Quaternion.identity).GetComponent<Tilemap>();
+        stageBoard.transform.SetParent(gridLayer.transform, false);
+
+        // 盤面のサイズを取得
+        StartCoroutine(GetStageData(currentStageId+currentDifficulty*stageNumber+1));
+        // GetBoardScale();
+
+        // 盤面の状態をコピー // ディープコピーの方法がわからない
+        currentStageBoardGrid = new char[stageBoardGridHeight][];
+        for(int i = 0; i < stageBoardGridHeight; i++) currentStageBoardGrid[i] = new char[stageBoardGridWidth];
+        for(int i = 0; i < stageBoardGridHeight; i++) {
+            for(int j = 0; j < stageBoardGridWidth; j++) {
+                currentStageBoardGrid[i][j] = stageBoardGrid[i][j];
+            }
+        }
+
+        // // 盤面の状態を反映
+        // SetTiles();
+
+        // // プレイヤー位置の初期化
+        // player.transform.position = new Vector3(startPointX+stageBoardWidth/2.0f, startPointY+stageBoardHeight/2.0f, 0.0f);
+        // currentPlayerX = startPointX; currentPlayerXOnBoard = startPointXOnBoard;
+        // currentPlayerY = startPointY; currentPlayerYOnBoard = startPointYOnBoard;
+        // player.transform.localScale = new Vector3(stageBoardWidth, stageBoardHeight, 1.0f);
+        // targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
+        // goalPosition = new Vector3(goalPointX+stageBoardWidth/2.0f, goalPointY+stageBoardHeight/2.0f, 0.0f);
 
         // その他変数を初期化
         isFinish = false;

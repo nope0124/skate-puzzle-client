@@ -44,17 +44,12 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-
     public bool BGMStatus
     {
         get { return bgmStatus; }
         set {
             bgmStatus = value;
-            if(bgmStatus) {
-                bgmAudioSource.mute = false;
-            }else {
-                bgmAudioSource.mute = true;
-            }
+            bgmAudioSource.mute = !bgmStatus;
         }
     }
 
@@ -63,11 +58,7 @@ public class AudioManager : MonoBehaviour
         get { return seStatus; }
         set {
             seStatus = value;
-            if(seStatus) {
-                seAudioSource.mute = false;
-            }else {
-                seAudioSource.mute = true;
-            }
+            seAudioSource.mute = !seStatus;
         }
     }
 
@@ -77,7 +68,6 @@ public class AudioManager : MonoBehaviour
     }
 
     public void PlaySE(string seName) {
-        // if(seStatus == false) return;
         seAudioSource.PlayOneShot(Resources.Load<AudioClip>($"Music/SE/{seName}"));
     }
 

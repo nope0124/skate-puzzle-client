@@ -29,7 +29,6 @@ public class StartManager : MonoBehaviour
     [SerializeField] GameObject dataResetPanel;
     [SerializeField] GameObject dataResetFinishPanel;
     [SerializeField] GameObject eventSystem;
-    [SerializeField] AudioSource decisionSoundEffect;
     [SerializeField] GameObject Test;
 
     [Serializable]

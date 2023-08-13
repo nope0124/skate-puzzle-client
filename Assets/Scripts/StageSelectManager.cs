@@ -272,7 +272,6 @@ public class StageSelectManager : MonoBehaviour
     /// </summary>
     public void OnClickHomeButton() {
         AudioManager.Instance.PlaySE("Decision");
-        // soundSE(AudioManager.Instance.SEStatus);
         eventSystem.SetActive(false);
         FadeManager.Instance.LoadScene(0.5f, "Start");
         defaultBannerView.Destroy();

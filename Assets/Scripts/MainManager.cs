@@ -58,8 +58,6 @@ public class MainManager : MonoBehaviour
     [SerializeField] GameObject bgmButton;
     [SerializeField] GameObject seButton;
 
-    [SerializeField] AudioSource decisionSoundEffect;
-    [SerializeField] AudioSource clearSoundEffect;
     [SerializeField] AudioClip bgmAudioClip;
 
     [SerializeField] Text stageIdText;

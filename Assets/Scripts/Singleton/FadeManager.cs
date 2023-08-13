@@ -20,7 +20,7 @@ public class FadeManager : MonoBehaviour
                 GameObject canvasObject = new GameObject("CanvasFade");
                 canvas = canvasObject.AddComponent<Canvas>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                canvas.sortingOrder = 100;
+                canvas.sortingOrder = 100; // 前面に
 
                 // Image作成
                 image = new GameObject("ImageFade").AddComponent<Image>();
@@ -73,7 +73,7 @@ public class FadeManager : MonoBehaviour
         time = 0f;
         while (time <= intervalTime)
         {
-            float fadeAlpha = Mathf.Lerp(1.05f, 0.0f, time / intervalTime);
+            float fadeAlpha = Mathf.Lerp(1.05f, 0.0f, time/intervalTime);
             image.color = new Color(0.2f, 0.2f, 0.2f, fadeAlpha);
             time += Time.deltaTime;
             yield return null;

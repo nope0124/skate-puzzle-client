@@ -1,25 +1,19 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class AudioManager : MonoBehaviour
+public class AudioManager
 {
-	static bool bgmFlag = false;
-    static bool seFlag = false;
+    static bool bgmStatus = false;
+    static bool seStatus = false;
 
-    public bool GetBGMFlag() {
-        return bgmFlag;
-    }
-	
-	public void SetBGMFlag(bool argBGMFlag) {
-        bgmFlag = argBGMFlag;
+    public bool BGMStatus
+    {
+        get { return bgmStatus; }
+        set { bgmStatus = value; }
     }
 
-    public bool GetSEFlag() {
-        return seFlag;
-    }
-
-	public void SetSEFlag(bool argSEFlag) {
-        seFlag = argSEFlag;
+    public bool SEStatus
+    {
+        get { return seStatus; }
+        set { seStatus = value; }
     }
 }

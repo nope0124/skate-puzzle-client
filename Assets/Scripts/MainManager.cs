@@ -183,7 +183,7 @@ public class MainManager : MonoBehaviour
     {
         // 次のシーンに遷移
         gamePlayCount = 0;
-        audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
+        audioSource.GetComponent<AudioSource>().mute = new AudioManager().BGMStatus;
         RequestStageTransInterstitial();
         hintFlag = false;
         // if(backFlag == true) {
@@ -206,12 +206,12 @@ public class MainManager : MonoBehaviour
         if(hintFlag == true) {
             gamePlayCount = Mathf.Max(0, gamePlayCount-2);
             hintFlag = false;
-            audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
+            audioSource.GetComponent<AudioSource>().mute = new AudioManager().BGMStatus;
             RequestStageTransInterstitial();
         } else if (nextFlag == true) {
             gamePlayCount = 0;
             nextFlag = false;
-            audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
+            audioSource.GetComponent<AudioSource>().mute = new AudioManager().BGMStatus;
             RequestStageTransInterstitial();
         } else {
             gamePlayCount = 0;
@@ -256,7 +256,7 @@ public class MainManager : MonoBehaviour
     }
 
     void SetBGM() {
-        if(new AudioManager().GetBGMFlag()) {
+        if(new AudioManager().BGMStatus) {
             audioSource.GetComponent<AudioSource>().mute = true;
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
         }else {
@@ -266,7 +266,7 @@ public class MainManager : MonoBehaviour
     }
 
     void SetSE() {
-        if(new AudioManager().GetSEFlag()) {
+        if(new AudioManager().SEStatus) {
             seButton.GetComponent<Image>().sprite = muteSESprite;
         }else {
             seButton.GetComponent<Image>().sprite = notMuteSESprite;
@@ -331,13 +331,6 @@ public class MainManager : MonoBehaviour
     }
 
 
-    public class BoardData
-    {
-        public int width;
-        public int height;
-        public string[] board;
-    }
-
     IEnumerator GetStageData(int stage_id)
     {
         string url = baseURL + "/api/v1/stages/" + stage_id.ToString();
@@ -354,7 +347,7 @@ public class MainManager : MonoBehaviour
             if(request.responseCode == 200)
             {
                 // JSONデータをC#オブジェクトにデシリアライズ
-                BoardData data = JsonUtility.FromJson<BoardData>(request.downloadHandler.text);
+                GetStageBoardResponse data = JsonUtility.FromJson<GetStageBoardResponse>(request.downloadHandler.text);
 
                 Debug.Log(data.width);
                 Debug.Log(data.height);
@@ -518,7 +511,7 @@ public class MainManager : MonoBehaviour
                 string userId = PlayerPrefs.GetString("user_id");
                 if(userId == "") {
                     if(turnCount <= distance) {
-                        soundClearSE(new AudioManager().GetSEFlag());
+                        soundClearSE(new AudioManager().SEStatus);
                         clearScore[2].SetActive(true);
                         PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
                     }else if(turnCount <= distance*2) {
@@ -539,7 +532,7 @@ public class MainManager : MonoBehaviour
                     Dictionary<string, object> childUpdates = new Dictionary<string, object>();
                     difficultyName = new string[]{"easy", "normal", "hard"};
                     if(turnCount <= distance) {
-                        soundClearSE(new AudioManager().GetSEFlag());
+                        soundClearSE(new AudioManager().SEStatus);
                         clearScore[2].SetActive(true);
                         PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
                     }else if(turnCount <= distance*2) {
@@ -627,7 +620,7 @@ public class MainManager : MonoBehaviour
                 MovePlayer(i);
                 AnimatorReset();
                 if(turnCount < 999) turnCount++;
-                soundDecisionSE(new AudioManager().GetSEFlag());
+                soundDecisionSE(new AudioManager().SEStatus);
                 playerAnim.SetBool(ANIMATOR_DIR[i], true);
                 hintMovesStack.Dequeue();
                 ButtonHintReset();
@@ -640,14 +633,14 @@ public class MainManager : MonoBehaviour
             if((player.transform.position - targetPosition).magnitude <= EPS && playerAnim.GetBool(ANIMATOR_DIR[i])) return;
             AnimatorReset();
             if(turnCount < 999) turnCount++;
-            soundDecisionSE(new AudioManager().GetSEFlag());
+            soundDecisionSE(new AudioManager().SEStatus);
             playerAnim.SetBool(ANIMATOR_DIR[i], true);
         }
         
     }
 
     public void OnClickPauseButton() {
-        soundDecisionSE(new AudioManager().GetSEFlag());
+        soundDecisionSE(new AudioManager().SEStatus);
         if(isFinish) return;
         if(!pausePanel.activeSelf) {
             pausePanel.SetActive(true);
@@ -656,7 +649,7 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickBackButton() {
-        soundDecisionSE(new AudioManager().GetSEFlag());
+        soundDecisionSE(new AudioManager().SEStatus);
         Time.timeScale = 1.0f;
         defaultBannerView.Destroy();
         eventSystem.SetActive(false);
@@ -664,7 +657,7 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickRetryButton() {
-        soundDecisionSE(new AudioManager().GetSEFlag());
+        soundDecisionSE(new AudioManager().SEStatus);
         gamePlayCount++;
         Init();
         pausePanel.SetActive(false);
@@ -672,13 +665,13 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickPlayButton() {
-        soundDecisionSE(new AudioManager().GetSEFlag());
+        soundDecisionSE(new AudioManager().SEStatus);
         pausePanel.SetActive(false);
         Time.timeScale = 1.0f;
     }
 
     public void OnClickHintButton() {
-        soundDecisionSE(new AudioManager().GetSEFlag());
+        soundDecisionSE(new AudioManager().SEStatus);
         if(isFinish) return;
         if (!hintPanel.activeSelf) {
             hintPanel.SetActive(true);
@@ -693,7 +686,7 @@ public class MainManager : MonoBehaviour
     }
     
     public void OnClickHintYesButton() {
-        soundDecisionSE(new AudioManager().GetSEFlag());
+        soundDecisionSE(new AudioManager().SEStatus);
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
         // Init();
@@ -715,7 +708,7 @@ public class MainManager : MonoBehaviour
     
 
     public void OnClickHintNoButton() {
-        soundDecisionSE(new AudioManager().GetSEFlag());
+        soundDecisionSE(new AudioManager().SEStatus);
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
     }
@@ -723,7 +716,7 @@ public class MainManager : MonoBehaviour
 
 
     public void OnClickNextButton() {
-        soundDecisionSE(new AudioManager().GetSEFlag());
+        soundDecisionSE(new AudioManager().SEStatus);
         gamePlayCount += 2;
         currentDifficulty = (currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber;
         currentStageId = (currentStageId+1) % stageNumber;
@@ -745,21 +738,21 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickBGMButton() {
-        soundDecisionSE(new AudioManager().GetSEFlag());
-        new AudioManager().SetBGMFlag(!(new AudioManager().GetBGMFlag()));
-        if(new AudioManager().GetBGMFlag()) {
+        soundDecisionSE(new AudioManager().SEStatus);
+        new AudioManager().BGMStatus = !(new AudioManager().BGMStatus);
+        if(new AudioManager().BGMStatus) {
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
         }else {
             bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
         }
-        audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
+        audioSource.GetComponent<AudioSource>().mute = new AudioManager().BGMStatus;
     }
 
 
     public void OnClickSEButton() {
-        soundDecisionSE(new AudioManager().GetSEFlag());
-        new AudioManager().SetSEFlag(!(new AudioManager().GetSEFlag()));
-        if(new AudioManager().GetSEFlag()) {
+        soundDecisionSE(new AudioManager().SEStatus);
+        new AudioManager().SEStatus = !(new AudioManager().SEStatus);
+        if(new AudioManager().SEStatus) {
             seButton.GetComponent<Image>().sprite = muteSESprite;
         }else {
             seButton.GetComponent<Image>().sprite = notMuteSESprite;

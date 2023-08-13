@@ -79,15 +79,11 @@ public class StageSelectManager : MonoBehaviour
         defaultBannerView.LoadAd(request);
     }
 
-    [System.Serializable]
-    public class UserProgressData
-    {
-        public int[] progresses;
-    }
+    
 
     // BGMの設定
     void SetBGM() {
-        if(new AudioManager().GetBGMFlag()) {
+        if(new AudioManager().BGMStatus) {
             audioSource.GetComponent<AudioSource>().mute = true;
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
         }else {
@@ -98,7 +94,7 @@ public class StageSelectManager : MonoBehaviour
 
     // SEの設定
     void SetSE() {
-        if(new AudioManager().GetSEFlag()) {
+        if(new AudioManager().SEStatus) {
             seButton.GetComponent<Image>().sprite = muteSESprite;
         }else {
             seButton.GetComponent<Image>().sprite = notMuteSESprite;
@@ -228,7 +224,7 @@ public class StageSelectManager : MonoBehaviour
             if(request.responseCode == 200)
             {
                 // JSONデータをC#オブジェクトにデシリアライズ
-                UserProgressData data = JsonUtility.FromJson<UserProgressData>(request.downloadHandler.text);
+                GetUserStageProgressResponse data = JsonUtility.FromJson<GetUserStageProgressResponse>(request.downloadHandler.text);
 
                 // データの表示
                 foreach (int progress in data.progresses)
@@ -269,7 +265,7 @@ public class StageSelectManager : MonoBehaviour
     /// </summary>
     /// <param name="diff">-1か+1か</param>
     public void OnClickStageLevelButton(int diff) {
-        soundSE(new AudioManager().GetSEFlag());
+        soundSE(new AudioManager().SEStatus);
         currentDifficulty = (currentDifficulty+difficultyNumber+diff)%difficultyNumber;
         for(int num = 0; num < difficultyNumber; num++) {
             if(num == currentDifficulty) {
@@ -286,7 +282,7 @@ public class StageSelectManager : MonoBehaviour
     /// スタート画面に戻る
     /// </summary>
     public void OnClickHomeButton() {
-        soundSE(new AudioManager().GetSEFlag());
+        soundSE(new AudioManager().SEStatus);
         eventSystem.SetActive(false);
         FadeManager.Instance.LoadScene(0.5f, "Start");
         defaultBannerView.Destroy();
@@ -297,14 +293,14 @@ public class StageSelectManager : MonoBehaviour
     /// BGMのオンオフ
     /// </summary>
     public void OnClickBGMButton() {
-        soundSE(new AudioManager().GetSEFlag());
-        new AudioManager().SetBGMFlag(!(new AudioManager().GetBGMFlag()));
-        if(new AudioManager().GetBGMFlag()) {
+        soundSE(new AudioManager().SEStatus);
+        new AudioManager().BGMStatus = !(new AudioManager().BGMStatus);
+        if(new AudioManager().BGMStatus) {
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
         }else {
             bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
         }
-        audioSource.GetComponent<AudioSource>().mute = new AudioManager().GetBGMFlag();
+        audioSource.GetComponent<AudioSource>().mute = new AudioManager().BGMStatus;
     }
 
 
@@ -312,9 +308,9 @@ public class StageSelectManager : MonoBehaviour
     /// SEのオンオフ
     /// </summary>
     public void OnClickSEButton() {
-        soundSE(new AudioManager().GetSEFlag());
-        new AudioManager().SetSEFlag(!(new AudioManager().GetSEFlag()));
-        if(new AudioManager().GetSEFlag()) {
+        soundSE(new AudioManager().SEStatus);
+        new AudioManager().SEStatus = !(new AudioManager().SEStatus);
+        if(new AudioManager().SEStatus) {
             seButton.GetComponent<Image>().sprite = muteSESprite;
         }else {
             seButton.GetComponent<Image>().sprite = notMuteSESprite;

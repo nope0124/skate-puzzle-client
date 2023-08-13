@@ -216,7 +216,7 @@ public class StartManager : MonoBehaviour
     /// </summary>
     public void OnClickStartButton()
     {
-        soundSE(new AudioManager().GetSEFlag());
+        soundSE(new AudioManager().SEStatus);
         // defaultBannerView.Destroy();
         eventSystem.SetActive(false);
         FadeManager.Instance.LoadScene(0.5f, "StageSelect");
@@ -227,7 +227,7 @@ public class StartManager : MonoBehaviour
     /// データリセットボタン
     /// </summary>
     public void OnClickDataResetButton() {
-        soundSE(new AudioManager().GetSEFlag());
+        soundSE(new AudioManager().SEStatus);
         if (!dataResetPanel.activeSelf) {
             dataResetPanel.SetActive(true);
         }
@@ -237,7 +237,7 @@ public class StartManager : MonoBehaviour
     /// データリセットボタンでYes
     /// </summary>
     public void OnClickDataResetYesButton() {
-        soundSE(new AudioManager().GetSEFlag());
+        soundSE(new AudioManager().SEStatus);
         for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
             for(int tempStageId = 0; tempStageId < stageNumber; tempStageId++) {
                 string stageName = "StageScore" + tempDifficulty.ToString() + "_" + tempStageId.ToString();
@@ -272,7 +272,7 @@ public class StartManager : MonoBehaviour
     /// データリセットボタンでNo
     /// </summary>
     public void OnClickDataResetNoButton() {
-        soundSE(new AudioManager().GetSEFlag());
+        soundSE(new AudioManager().SEStatus);
         dataResetPanel.SetActive(false);
     }
 
@@ -280,7 +280,7 @@ public class StartManager : MonoBehaviour
     /// データリセット完了
     /// </summary>
     public void OnClickDataResetFinishButton() {
-        soundSE(new AudioManager().GetSEFlag());
+        soundSE(new AudioManager().SEStatus);
         dataResetFinishPanel.SetActive(false);
     }
 

@@ -17,7 +17,7 @@ public class ButtonManager : MonoBehaviour
 
     public void OnClickStageSelectButton()
     {
-        soundSE(new AudioManager().GetSEFlag());
+        soundSE(new AudioManager().SEStatus);
         new MainManager().SetCurrentStageId(argStageId);
         new MainManager().SetCurrentDifficulty(argDifficulty);
         new StageSelectManager().SetFadeOutFlagToMain();

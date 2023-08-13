@@ -183,7 +183,6 @@ public class MainManager : MonoBehaviour
     {
         // 次のシーンに遷移
         gamePlayCount = 0;
-        // audioSource.GetComponent<AudioSource>().mute = AudioManager.Instance.BGMStatus;
         RequestStageTransInterstitial();
         hintFlag = false;
         // if(backFlag == true) {
@@ -206,12 +205,10 @@ public class MainManager : MonoBehaviour
         if(hintFlag == true) {
             gamePlayCount = Mathf.Max(0, gamePlayCount-2);
             hintFlag = false;
-            // audioSource.GetComponent<AudioSource>().mute = AudioManager.Instance.BGMStatus;
             RequestStageTransInterstitial();
         } else if (nextFlag == true) {
             gamePlayCount = 0;
             nextFlag = false;
-            // audioSource.GetComponent<AudioSource>().mute = AudioManager.Instance.BGMStatus;
             RequestStageTransInterstitial();
         } else {
             gamePlayCount = 0;
@@ -264,7 +261,7 @@ public class MainManager : MonoBehaviour
     }
 
     void SetSE() {
-        if(AudioManager.Instance.SEStatus) {
+        if(AudioManager.Instance.SEStatus == false) {
             seButton.GetComponent<Image>().sprite = muteSESprite;
         }else {
             seButton.GetComponent<Image>().sprite = notMuteSESprite;
@@ -438,17 +435,6 @@ public class MainManager : MonoBehaviour
         clearPanel.SetActive(false);
     }
 
-    public void soundDecisionSE(bool argSEFlag) {
-        if(!argSEFlag) {
-            decisionSoundEffect.GetComponent<AudioSource>().PlayOneShot(decisionSoundEffect.GetComponent<AudioSource>().clip);
-        }
-    }
-
-    public void soundClearSE(bool argSEFlag) {
-        if(!argSEFlag) {
-            clearSoundEffect.GetComponent<AudioSource>().PlayOneShot(clearSoundEffect.GetComponent<AudioSource>().clip);
-        }
-    }
 
     void Start()
     {
@@ -510,7 +496,7 @@ public class MainManager : MonoBehaviour
                 string userId = PlayerPrefs.GetString("user_id");
                 if(userId == "") {
                     if(turnCount <= distance) {
-                        soundClearSE(AudioManager.Instance.SEStatus);
+                        AudioManager.Instance.PlaySE("Clear");
                         clearScore[2].SetActive(true);
                         PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
                     }else if(turnCount <= distance*2) {
@@ -531,7 +517,7 @@ public class MainManager : MonoBehaviour
                     Dictionary<string, object> childUpdates = new Dictionary<string, object>();
                     difficultyName = new string[]{"easy", "normal", "hard"};
                     if(turnCount <= distance) {
-                        soundClearSE(AudioManager.Instance.SEStatus);
+                        AudioManager.Instance.PlaySE("Clear");
                         clearScore[2].SetActive(true);
                         PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
                     }else if(turnCount <= distance*2) {
@@ -619,7 +605,7 @@ public class MainManager : MonoBehaviour
                 MovePlayer(i);
                 AnimatorReset();
                 if(turnCount < 999) turnCount++;
-                soundDecisionSE(AudioManager.Instance.SEStatus);
+                AudioManager.Instance.PlaySE("Decision");
                 playerAnim.SetBool(ANIMATOR_DIR[i], true);
                 hintMovesStack.Dequeue();
                 ButtonHintReset();
@@ -632,14 +618,14 @@ public class MainManager : MonoBehaviour
             if((player.transform.position - targetPosition).magnitude <= EPS && playerAnim.GetBool(ANIMATOR_DIR[i])) return;
             AnimatorReset();
             if(turnCount < 999) turnCount++;
-            soundDecisionSE(AudioManager.Instance.SEStatus);
+            AudioManager.Instance.PlaySE("Decision");
             playerAnim.SetBool(ANIMATOR_DIR[i], true);
         }
         
     }
 
     public void OnClickPauseButton() {
-        soundDecisionSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         if(isFinish) return;
         if(!pausePanel.activeSelf) {
             pausePanel.SetActive(true);
@@ -648,7 +634,7 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickBackButton() {
-        soundDecisionSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         Time.timeScale = 1.0f;
         defaultBannerView.Destroy();
         eventSystem.SetActive(false);
@@ -656,7 +642,7 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickRetryButton() {
-        soundDecisionSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         gamePlayCount++;
         Init();
         pausePanel.SetActive(false);
@@ -664,13 +650,13 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickPlayButton() {
-        soundDecisionSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         pausePanel.SetActive(false);
         Time.timeScale = 1.0f;
     }
 
     public void OnClickHintButton() {
-        soundDecisionSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         if(isFinish) return;
         if (!hintPanel.activeSelf) {
             hintPanel.SetActive(true);
@@ -685,7 +671,7 @@ public class MainManager : MonoBehaviour
     }
     
     public void OnClickHintYesButton() {
-        soundDecisionSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
         // Init();
@@ -707,7 +693,7 @@ public class MainManager : MonoBehaviour
     
 
     public void OnClickHintNoButton() {
-        soundDecisionSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
     }
@@ -715,7 +701,7 @@ public class MainManager : MonoBehaviour
 
 
     public void OnClickNextButton() {
-        soundDecisionSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         gamePlayCount += 2;
         currentDifficulty = (currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber;
         currentStageId = (currentStageId+1) % stageNumber;
@@ -736,7 +722,7 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickBGMButton() {
-        soundDecisionSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         AudioManager.Instance.BGMStatus = !(AudioManager.Instance.BGMStatus);
         if(AudioManager.Instance.BGMStatus == false) {
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
@@ -747,9 +733,9 @@ public class MainManager : MonoBehaviour
 
 
     public void OnClickSEButton() {
-        soundDecisionSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         AudioManager.Instance.SEStatus = !(AudioManager.Instance.SEStatus);
-        if(AudioManager.Instance.SEStatus) {
+        if(AudioManager.Instance.SEStatus == false) {
             seButton.GetComponent<Image>().sprite = muteSESprite;
         }else {
             seButton.GetComponent<Image>().sprite = notMuteSESprite;

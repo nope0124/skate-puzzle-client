@@ -161,6 +161,9 @@ public class StartManager : MonoBehaviour
     {
         // MobileAds.Initialize(initStatus => { });
         // RequestDefaultBanner();
+
+        // BGMの設定
+        AudioManager.Instance.SetBGMAudioClip(null);
         if(PlayerPrefs.GetInt("Version1_1", 0) == 0) ChangePlayerPrefs();
         // if(PlayerPrefs.GetInt("v1_2", 0) == 0) ChangePlayerPrefs1_2();
     }
@@ -199,24 +202,12 @@ public class StartManager : MonoBehaviour
 
     }
 
-
-    /// <summary>
-    /// 効果音を鳴らす
-    /// </summary>
-    private void soundSE(bool argSEFlag) {
-        if(!argSEFlag) {
-            decisionSoundEffect.GetComponent<AudioSource>().PlayOneShot(decisionSoundEffect.GetComponent<AudioSource>().clip);
-        }
-    }
-
-
-
     /// <summary>
     /// スタートボタン
     /// </summary>
     public void OnClickStartButton()
     {
-        soundSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         // defaultBannerView.Destroy();
         eventSystem.SetActive(false);
         FadeManager.Instance.LoadScene(0.5f, "StageSelect");
@@ -227,7 +218,7 @@ public class StartManager : MonoBehaviour
     /// データリセットボタン
     /// </summary>
     public void OnClickDataResetButton() {
-        soundSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         if (!dataResetPanel.activeSelf) {
             dataResetPanel.SetActive(true);
         }
@@ -237,7 +228,7 @@ public class StartManager : MonoBehaviour
     /// データリセットボタンでYes
     /// </summary>
     public void OnClickDataResetYesButton() {
-        soundSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
             for(int tempStageId = 0; tempStageId < stageNumber; tempStageId++) {
                 string stageName = "StageScore" + tempDifficulty.ToString() + "_" + tempStageId.ToString();
@@ -272,7 +263,7 @@ public class StartManager : MonoBehaviour
     /// データリセットボタンでNo
     /// </summary>
     public void OnClickDataResetNoButton() {
-        soundSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         dataResetPanel.SetActive(false);
     }
 
@@ -280,7 +271,7 @@ public class StartManager : MonoBehaviour
     /// データリセット完了
     /// </summary>
     public void OnClickDataResetFinishButton() {
-        soundSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         dataResetFinishPanel.SetActive(false);
     }
 

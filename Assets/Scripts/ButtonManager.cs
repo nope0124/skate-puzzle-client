@@ -9,15 +9,9 @@ public class ButtonManager : MonoBehaviour
     public int argDifficulty { get; set; }
     [SerializeField] AudioSource decisionSoundEffect;
 
-    public void soundSE(bool argSEFlag) {
-        if(!argSEFlag) {
-            decisionSoundEffect.GetComponent<AudioSource>().PlayOneShot(decisionSoundEffect.GetComponent<AudioSource>().clip);
-        }
-    }
-
     public void OnClickStageSelectButton()
     {
-        soundSE(new AudioManager().SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         new MainManager().SetCurrentStageId(argStageId);
         new MainManager().SetCurrentDifficulty(argDifficulty);
         new StageSelectManager().SetFadeOutFlagToMain();

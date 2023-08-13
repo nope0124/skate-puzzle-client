@@ -42,7 +42,6 @@ public class StageSelectManager : MonoBehaviour
     [SerializeField] GameObject buttonLayer;
     [SerializeField] GameObject effectLayer;
 
-    [SerializeField] AudioSource decisionSoundEffect;
     [SerializeField] AudioClip bgmAudioClip;
 
     [SerializeField] Sprite muteBGMSprite;
@@ -92,7 +91,7 @@ public class StageSelectManager : MonoBehaviour
 
     // SEの設定
     void SetSE() {
-        if(AudioManager.Instance.SEStatus) {
+        if(AudioManager.Instance.SEStatus == false) {
             seButton.GetComponent<Image>().sprite = muteSESprite;
         }else {
             seButton.GetComponent<Image>().sprite = notMuteSESprite;
@@ -249,22 +248,13 @@ public class StageSelectManager : MonoBehaviour
             FadeManager.Instance.LoadScene(0.5f, "Main");
         }
     }
-    
-    /// <summary>
-    /// 効果音を鳴らす
-    /// </summary>
-    public void soundSE(bool argSEFlag) {
-        if(!argSEFlag) {
-            decisionSoundEffect.GetComponent<AudioSource>().PlayOneShot(decisionSoundEffect.GetComponent<AudioSource>().clip);
-        }
-    }
 
     /// <summary>
     /// 難易度ボタン
     /// </summary>
     /// <param name="diff">-1か+1か</param>
     public void OnClickStageLevelButton(int diff) {
-        soundSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         currentDifficulty = (currentDifficulty+difficultyNumber+diff)%difficultyNumber;
         for(int num = 0; num < difficultyNumber; num++) {
             if(num == currentDifficulty) {
@@ -281,7 +271,8 @@ public class StageSelectManager : MonoBehaviour
     /// スタート画面に戻る
     /// </summary>
     public void OnClickHomeButton() {
-        soundSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
+        // soundSE(AudioManager.Instance.SEStatus);
         eventSystem.SetActive(false);
         FadeManager.Instance.LoadScene(0.5f, "Start");
         defaultBannerView.Destroy();
@@ -292,7 +283,7 @@ public class StageSelectManager : MonoBehaviour
     /// BGMのオンオフ
     /// </summary>
     public void OnClickBGMButton() {
-        soundSE(AudioManager.Instance.SEStatus);
+        AudioManager.Instance.PlaySE("Decision");
         AudioManager.Instance.BGMStatus = !(AudioManager.Instance.BGMStatus);
         if(AudioManager.Instance.BGMStatus == false) {
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
@@ -306,13 +297,13 @@ public class StageSelectManager : MonoBehaviour
     /// SEのオンオフ
     /// </summary>
     public void OnClickSEButton() {
-        soundSE(AudioManager.Instance.SEStatus);
         AudioManager.Instance.SEStatus = !(AudioManager.Instance.SEStatus);
-        if(AudioManager.Instance.SEStatus) {
+        if(AudioManager.Instance.SEStatus == false) {
             seButton.GetComponent<Image>().sprite = muteSESprite;
         }else {
             seButton.GetComponent<Image>().sprite = notMuteSESprite;
         }
+        AudioManager.Instance.PlaySE("Decision");
     }
 
     public void SetFadeOutFlagToMain() {

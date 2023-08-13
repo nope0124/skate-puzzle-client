@@ -42,8 +42,8 @@ public class StageSelectManager : MonoBehaviour
     [SerializeField] GameObject buttonLayer;
     [SerializeField] GameObject effectLayer;
 
-    [SerializeField] AudioSource audioSource;
     [SerializeField] AudioSource decisionSoundEffect;
+    [SerializeField] AudioClip bgmAudioClip;
 
     [SerializeField] Sprite muteBGMSprite;
     [SerializeField] Sprite notMuteBGMSprite;
@@ -83,11 +83,9 @@ public class StageSelectManager : MonoBehaviour
 
     // BGMの設定
     void SetBGM() {
-        if(AudioManager.Instance.BGMStatus) {
-            audioSource.GetComponent<AudioSource>().mute = true;
+        if(AudioManager.Instance.BGMStatus == false) {
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
         }else {
-            audioSource.GetComponent<AudioSource>().mute = false;
             bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
         }
     }
@@ -187,6 +185,7 @@ public class StageSelectManager : MonoBehaviour
         RequestDefaultBanner();
 
         // BGMの設定
+        AudioManager.Instance.SetBGMAudioClip(bgmAudioClip);
         SetBGM();
 
         // SEの設定
@@ -295,12 +294,11 @@ public class StageSelectManager : MonoBehaviour
     public void OnClickBGMButton() {
         soundSE(AudioManager.Instance.SEStatus);
         AudioManager.Instance.BGMStatus = !(AudioManager.Instance.BGMStatus);
-        if(AudioManager.Instance.BGMStatus) {
+        if(AudioManager.Instance.BGMStatus == false) {
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
         }else {
             bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
         }
-        audioSource.GetComponent<AudioSource>().mute = AudioManager.Instance.BGMStatus;
     }
 
 

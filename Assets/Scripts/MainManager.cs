@@ -58,9 +58,9 @@ public class MainManager : MonoBehaviour
     [SerializeField] GameObject bgmButton;
     [SerializeField] GameObject seButton;
 
-    [SerializeField] AudioSource audioSource;
     [SerializeField] AudioSource decisionSoundEffect;
     [SerializeField] AudioSource clearSoundEffect;
+    [SerializeField] AudioClip bgmAudioClip;
 
     [SerializeField] Text stageIdText;
     [SerializeField] Text turnCountText;
@@ -183,7 +183,7 @@ public class MainManager : MonoBehaviour
     {
         // 次のシーンに遷移
         gamePlayCount = 0;
-        audioSource.GetComponent<AudioSource>().mute = AudioManager.Instance.BGMStatus;
+        // audioSource.GetComponent<AudioSource>().mute = AudioManager.Instance.BGMStatus;
         RequestStageTransInterstitial();
         hintFlag = false;
         // if(backFlag == true) {
@@ -206,12 +206,12 @@ public class MainManager : MonoBehaviour
         if(hintFlag == true) {
             gamePlayCount = Mathf.Max(0, gamePlayCount-2);
             hintFlag = false;
-            audioSource.GetComponent<AudioSource>().mute = AudioManager.Instance.BGMStatus;
+            // audioSource.GetComponent<AudioSource>().mute = AudioManager.Instance.BGMStatus;
             RequestStageTransInterstitial();
         } else if (nextFlag == true) {
             gamePlayCount = 0;
             nextFlag = false;
-            audioSource.GetComponent<AudioSource>().mute = AudioManager.Instance.BGMStatus;
+            // audioSource.GetComponent<AudioSource>().mute = AudioManager.Instance.BGMStatus;
             RequestStageTransInterstitial();
         } else {
             gamePlayCount = 0;
@@ -256,11 +256,9 @@ public class MainManager : MonoBehaviour
     }
 
     void SetBGM() {
-        if(AudioManager.Instance.BGMStatus) {
-            audioSource.GetComponent<AudioSource>().mute = true;
+        if(AudioManager.Instance.BGMStatus == false) {
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
         }else {
-            audioSource.GetComponent<AudioSource>().mute = false;
             bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
         }
     }
@@ -393,6 +391,7 @@ public class MainManager : MonoBehaviour
         // fadeOutFlag = false;
 
         // BGMの設定
+        AudioManager.Instance.SetBGMAudioClip(bgmAudioClip);
         SetBGM();
 
         // SEの設定
@@ -692,7 +691,7 @@ public class MainManager : MonoBehaviour
         // Init();
         if(stageTransInterstitialAd.IsLoaded()) {
             hintFlag = true;
-            audioSource.GetComponent<AudioSource>().mute = true;
+            // audioSource.GetComponent<AudioSource>().mute = true;
             stageTransInterstitialAd.Show();
         }
         
@@ -723,7 +722,6 @@ public class MainManager : MonoBehaviour
         Init();
         if(gamePlayCount >= adPlayBorderCount) {
             nextFlag = true;
-            audioSource.GetComponent<AudioSource>().mute = true;
             stageTransInterstitialAd.Show();
         }
     }
@@ -740,12 +738,11 @@ public class MainManager : MonoBehaviour
     public void OnClickBGMButton() {
         soundDecisionSE(AudioManager.Instance.SEStatus);
         AudioManager.Instance.BGMStatus = !(AudioManager.Instance.BGMStatus);
-        if(AudioManager.Instance.BGMStatus) {
+        if(AudioManager.Instance.BGMStatus == false) {
             bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
         }else {
             bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
         }
-        audioSource.GetComponent<AudioSource>().mute = AudioManager.Instance.BGMStatus;
     }
 
 

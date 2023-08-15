@@ -65,17 +65,15 @@ public class MainManager : MonoBehaviour
 
     [SerializeField] GameObject[] clearScore;
 
-    [SerializeField] GameObject eventSystem;
 
     [SerializeField] GameObject Test;
     
 
 
     Tilemap stageBoard;
-    static int currentDifficulty = 0;
-    const int difficultyNumber = 2;
+
     static int currentStageId = 0;
-    const int stageNumber = 15;
+    const int stageNumber = 30;
 
     int startPointXOnBoard, startPointYOnBoard, goalPointXOnBoard, goalPointYOnBoard;
     float startPointX, startPointY, goalPointX, goalPointY;
@@ -326,7 +324,7 @@ public class MainManager : MonoBehaviour
 
     IEnumerator GetStageData(int stage_id)
     {
-        string url = baseURL + "/api/v1/stages/" + stage_id.ToString();
+        string url = baseURL + "/api/v1/stages/" + (stage_id + 1).ToString();
         Debug.Log(url);
         UnityWebRequest request = UnityWebRequest.Get(url);
         yield return request.SendWebRequest();
@@ -371,7 +369,7 @@ public class MainManager : MonoBehaviour
         hintMovesStack.Clear();
 
 
-        stageIdText.text = "STAGE: " + (currentStageId+currentDifficulty*stageNumber).ToString("000");
+        stageIdText.text = "STAGE: " + (currentStageId).ToString("000");
         turnCount = 0;
 
         for(int i = 0; i < 3; i++) {
@@ -403,7 +401,7 @@ public class MainManager : MonoBehaviour
         stageBoard.transform.SetParent(gridLayer.transform, false);
 
         // 盤面のサイズを取得
-        StartCoroutine(GetStageData(currentStageId+currentDifficulty*stageNumber+1));
+        StartCoroutine(GetStageData(currentStageId));
         // GetBoardScale();
 
         // 盤面の状態をコピー // ディープコピーの方法がわからない
@@ -487,8 +485,8 @@ public class MainManager : MonoBehaviour
                 // RequestPauseBanner();
                 clearPanel.SetActive(true);
 
-                string stageName = "StageScore" + currentDifficulty.ToString() + "_" + currentStageId.ToString();
-                string stageNameUnlock = "StageScore" + ((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber).ToString() + "_" + ((currentStageId+1) % stageNumber).ToString();
+                string stageName = "StageScore" + currentStageId.ToString();
+                string stageNameUnlock = "StageScore" + ((currentStageId + 1) % stageNumber).ToString();
                 int tempScore = PlayerPrefs.GetInt(stageName, 0);
                 int distance = new Solver().GetOptMoves(stageBoardGrid);
                 string userId = PlayerPrefs.GetString("user_id");
@@ -504,9 +502,9 @@ public class MainManager : MonoBehaviour
                         clearScore[0].SetActive(true);
                         PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
                     }
-                    if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) {
-                        PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(0, PlayerPrefs.GetInt(stageNameUnlock)));
-                    }
+                    // if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) {
+                    //     PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(0, PlayerPrefs.GetInt(stageNameUnlock)));
+                    // }
                 }else {
                     FirebaseDatabase.GetInstance(Const.CO.DATABASE_URL); // データベースのURLを設定
                     // FirebaseApp.DefaultInstance.SetEditorDatabaseUrl(Const.CO.DATABASE_URL); // データベースのURLを設定
@@ -525,12 +523,12 @@ public class MainManager : MonoBehaviour
                         clearScore[0].SetActive(true);
                         PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
                     }
-                    childUpdates["/"+difficultyName[currentDifficulty]+"/"+currentStageId.ToString()] = PlayerPrefs.GetInt(stageName);
-                    if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) {
-                        PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(0, PlayerPrefs.GetInt(stageNameUnlock)));
-                        childUpdates["/"+difficultyName[(currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber]+"/"+((currentStageId+1) % stageNumber).ToString()] = PlayerPrefs.GetInt(stageNameUnlock);
-                    }
-                    scoreReference.UpdateChildrenAsync(childUpdates);
+                    // childUpdates["/"+difficultyName[currentDifficulty]+"/"+currentStageId.ToString()] = PlayerPrefs.GetInt(stageName);
+                    // if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) {
+                    //     PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(0, PlayerPrefs.GetInt(stageNameUnlock)));
+                    //     childUpdates["/"+difficultyName[(currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber]+"/"+((currentStageId+1) % stageNumber).ToString()] = PlayerPrefs.GetInt(stageNameUnlock);
+                    // }
+                    // scoreReference.UpdateChildrenAsync(childUpdates);
                 }
             
                 clearFlag = true;
@@ -635,7 +633,6 @@ public class MainManager : MonoBehaviour
         AudioManager.Instance.PlaySE("Decision");
         Time.timeScale = 1.0f;
         defaultBannerView.Destroy();
-        eventSystem.SetActive(false);
         FadeManager.Instance.LoadScene(0.5f, "StageSelect");
     }
 
@@ -701,7 +698,6 @@ public class MainManager : MonoBehaviour
     public void OnClickNextButton() {
         AudioManager.Instance.PlaySE("Decision");
         gamePlayCount += 2;
-        currentDifficulty = (currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber;
         currentStageId = (currentStageId+1) % stageNumber;
         Init();
         if(gamePlayCount >= adPlayBorderCount) {
@@ -713,10 +709,6 @@ public class MainManager : MonoBehaviour
 
     public void SetCurrentStageId(int argStageId) {
         currentStageId = argStageId;
-    }
-
-    public void SetCurrentDifficulty(int argDifficulty) {
-        currentDifficulty = argDifficulty;
     }
 
     public void OnClickBGMButton() {

@@ -57,7 +57,6 @@ public class StageSelectManager : MonoBehaviour
     GameObject[] difficultyUI;
     GameObject[] selectLight;
 
-    [SerializeField] GameObject eventSystem;
     static bool fadeOutFlagToMain = false;
 
 
@@ -243,7 +242,6 @@ public class StageSelectManager : MonoBehaviour
     {
         if(fadeOutFlagToMain == true) {
             fadeOutFlagToMain = false;
-            eventSystem.SetActive(false);
             defaultBannerView.Destroy();
             FadeManager.Instance.LoadScene(0.5f, "Main");
         }
@@ -272,7 +270,6 @@ public class StageSelectManager : MonoBehaviour
     /// </summary>
     public void OnClickHomeButton() {
         AudioManager.Instance.PlaySE("Decision");
-        eventSystem.SetActive(false);
         FadeManager.Instance.LoadScene(0.5f, "Start");
         defaultBannerView.Destroy();
     }

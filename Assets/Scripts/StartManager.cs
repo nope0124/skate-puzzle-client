@@ -28,7 +28,6 @@ public class StartManager : MonoBehaviour
     [SerializeField] Text idButtonText;
     [SerializeField] GameObject dataResetPanel;
     [SerializeField] GameObject dataResetFinishPanel;
-    [SerializeField] GameObject eventSystem;
     [SerializeField] GameObject Test;
 
     [Serializable]
@@ -208,7 +207,6 @@ public class StartManager : MonoBehaviour
     {
         AudioManager.Instance.PlaySE("Decision");
         // defaultBannerView.Destroy();
-        eventSystem.SetActive(false);
         FadeManager.Instance.LoadScene(0.5f, "StageSelect");
     }
 

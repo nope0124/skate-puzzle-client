@@ -19,6 +19,7 @@ public class FadeManager : MonoBehaviour
                 // Canvas作成
                 GameObject canvasObject = new GameObject("CanvasFade");
                 canvas = canvasObject.AddComponent<Canvas>();
+                canvasObject.AddComponent<GraphicRaycaster>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
                 canvas.sortingOrder = 100; // 前面に
 

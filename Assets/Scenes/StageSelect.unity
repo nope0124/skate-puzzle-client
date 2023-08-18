@@ -260,7 +260,6 @@ MonoBehaviour:
     type: 3}
   bgmButton: {fileID: 2012191900}
   seButton: {fileID: 1617327537}
-  eventSystem: {fileID: 1569180792}
   Test: {fileID: 1318723585}
 --- !u!1 &215379920
 GameObject:
@@ -1763,6 +1762,7 @@ GameObject:
   - component: {fileID: 1617327541}
   - component: {fileID: 1617327540}
   - component: {fileID: 1617327539}
+  - component: {fileID: 1617327542}
   m_Layer: 5
   m_Name: SEButton
   m_TagString: Untagged
@@ -1807,7 +1807,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 2
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -1818,7 +1818,7 @@ MonoBehaviour:
     m_FadeDuration: 0.1
   m_SpriteState:
     m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 21300000, guid: 956d848ec61ee43efa1e6e4585c4fc96, type: 3}
     m_SelectedSprite: {fileID: 0}
     m_DisabledSprite: {fileID: 0}
   m_AnimationTriggers:
@@ -1831,18 +1831,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1617327540}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 192764473}
-        m_MethodName: OnClickSEButton
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1617327540
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1880,6 +1869,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1617327537}
   m_CullTransparentMesh: 0
+--- !u!114 &1617327542
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1617327537}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcd7df0e345664aa19ba4825b3ddec9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  seSprite: {fileID: 21300000, guid: 1c933306e1d38487fbcb4b0898711835, type: 3}
+  pressedSESprite: {fileID: 21300000, guid: 956d848ec61ee43efa1e6e4585c4fc96, type: 3}
+  muteSESprite: {fileID: 21300000, guid: c5099d5d666b348cf8557eb56b81e450, type: 3}
+  pressedMuteSESprite: {fileID: 21300000, guid: 77b5fdd7dbffa47149105e1a0ef1076a,
+    type: 3}
 --- !u!1 &1780238333
 GameObject:
   m_ObjectHideFlags: 0
@@ -2086,6 +2092,7 @@ GameObject:
   - component: {fileID: 2012191904}
   - component: {fileID: 2012191903}
   - component: {fileID: 2012191902}
+  - component: {fileID: 2012191905}
   m_Layer: 5
   m_Name: BGMButton
   m_TagString: Untagged
@@ -2130,7 +2137,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 2
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -2154,18 +2161,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2012191903}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 192764473}
-        m_MethodName: OnClickBGMButton
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &2012191903
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2203,6 +2199,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2012191900}
   m_CullTransparentMesh: 0
+--- !u!114 &2012191905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2012191900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50d8eb485da5c49f69665a9a3649079d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bgmSprite: {fileID: 21300000, guid: 948826d2fb3f04d549a39abc60a7e9fd, type: 3}
+  pressedBGMSprite: {fileID: 21300000, guid: 09e42e03fb12247d5a47f387cf1d6b57, type: 3}
+  muteBGMSprite: {fileID: 21300000, guid: 939554680c6e64c55a63f490e02f5748, type: 3}
+  pressedMuteBGMSprite: {fileID: 21300000, guid: 34f56a34333f34cf7a69e3fd06aecd1b,
+    type: 3}
 --- !u!1 &2051233313
 GameObject:
   m_ObjectHideFlags: 0

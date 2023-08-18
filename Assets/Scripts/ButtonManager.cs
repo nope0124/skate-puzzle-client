@@ -1,17 +1,20 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class ButtonManager : MonoBehaviour
 {
-    public int argStageId { get; set; }
-    public int argDifficulty { get; set; }
+    private void Start()
+    {
+        gameObject.GetComponent<Button>().onClick.AddListener(OnClickStageSelectButton);
+    }
 
-    public void OnClickStageSelectButton()
+    private void OnClickStageSelectButton()
     {
         AudioManager.Instance.PlaySE("Decision");
-        new MainManager().SetCurrentStageId(argStageId);
+        new MainManager().CurrentStageId = int.Parse(transform.Find("StageIdText").GetComponent<Text>().text);
         new StageSelectManager().SetFadeOutFlagToMain();
     }
 }

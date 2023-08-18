@@ -48,15 +48,7 @@ public class MainManager : MonoBehaviour
 
     [SerializeField] GameObject[] DPadButton;
     [SerializeField] Sprite[] blueButton;
-    [SerializeField] Sprite[] redButton; 
-
-    [SerializeField] Sprite muteBGMSprite;
-    [SerializeField] Sprite notMuteBGMSprite;
-    [SerializeField] Sprite muteSESprite;
-    [SerializeField] Sprite notMuteSESprite;
-
-    [SerializeField] GameObject bgmButton;
-    [SerializeField] GameObject seButton;
+    [SerializeField] Sprite[] redButton;
 
     [SerializeField] AudioClip bgmAudioClip;
 
@@ -116,6 +108,11 @@ public class MainManager : MonoBehaviour
     // DatabaseReference scoreReference;
     string[] difficultyName;
 
+    public int CurrentStageId
+    {
+        get { return currentStageId; }
+        set { currentStageId = value; }
+    }
 
     private void RequestDefaultBanner()
     {
@@ -248,21 +245,6 @@ public class MainManager : MonoBehaviour
         }
     }
 
-    void SetBGM() {
-        if(AudioManager.Instance.BGMStatus == false) {
-            bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
-        }else {
-            bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
-        }
-    }
-
-    void SetSE() {
-        if(AudioManager.Instance.SEStatus == false) {
-            seButton.GetComponent<Image>().sprite = muteSESprite;
-        }else {
-            seButton.GetComponent<Image>().sprite = notMuteSESprite;
-        }
-    }
 
     void SetTiles() {
         for(int y = 0; y < stageBoardGridHeight; y++) {
@@ -385,10 +367,6 @@ public class MainManager : MonoBehaviour
 
         // BGMの設定
         AudioManager.Instance.SetBGMAudioClip(bgmAudioClip);
-        SetBGM();
-
-        // SEの設定
-        SetSE();
 
         // プレイヤーのアニメーションをリセット
         AnimatorReset();
@@ -709,27 +687,6 @@ public class MainManager : MonoBehaviour
 
     public void SetCurrentStageId(int argStageId) {
         currentStageId = argStageId;
-    }
-
-    public void OnClickBGMButton() {
-        AudioManager.Instance.PlaySE("Decision");
-        AudioManager.Instance.BGMStatus = !(AudioManager.Instance.BGMStatus);
-        if(AudioManager.Instance.BGMStatus == false) {
-            bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
-        }else {
-            bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
-        }
-    }
-
-
-    public void OnClickSEButton() {
-        AudioManager.Instance.PlaySE("Decision");
-        AudioManager.Instance.SEStatus = !(AudioManager.Instance.SEStatus);
-        if(AudioManager.Instance.SEStatus == false) {
-            seButton.GetComponent<Image>().sprite = muteSESprite;
-        }else {
-            seButton.GetComponent<Image>().sprite = notMuteSESprite;
-        }
     }
 
 }

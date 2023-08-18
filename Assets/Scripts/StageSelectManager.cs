@@ -25,8 +25,8 @@ public class StageSelectManager : MonoBehaviour
     const int stageSelectHeightNumber = 3;
 
     const int selectLightWidth = 150;
-    const int selectLightWidthCenter = 0;
-    const int selectLightHeightCenter = -270;
+    const int selectLightWidthCenter = 0; // SelectLightの水平方向の中心点
+    const int selectLightHeightCenter = -270; // SelectLightの垂直方向の中心点
     const int selectLightWidthNumber = difficultyNumber;
 
 
@@ -44,15 +44,8 @@ public class StageSelectManager : MonoBehaviour
 
     [SerializeField] AudioClip bgmAudioClip;
 
-    [SerializeField] Sprite muteBGMSprite;
-    [SerializeField] Sprite notMuteBGMSprite;
-    [SerializeField] Sprite muteSESprite;
-    [SerializeField] Sprite notMuteSESprite;
     [SerializeField] Sprite selectLightSprite;
     [SerializeField] Sprite notSelectLightSprite;
-
-    [SerializeField] GameObject bgmButton;
-    [SerializeField] GameObject seButton;
 
     GameObject[] difficultyUI;
     GameObject[] selectLight;
@@ -75,26 +68,6 @@ public class StageSelectManager : MonoBehaviour
         AdRequest request = new AdRequest.Builder().Build();
 
         defaultBannerView.LoadAd(request);
-    }
-
-    
-
-    // BGMの設定
-    void SetBGM() {
-        if(AudioManager.Instance.BGMStatus == false) {
-            bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
-        }else {
-            bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
-        }
-    }
-
-    // SEの設定
-    void SetSE() {
-        if(AudioManager.Instance.SEStatus == false) {
-            seButton.GetComponent<Image>().sprite = muteSESprite;
-        }else {
-            seButton.GetComponent<Image>().sprite = notMuteSESprite;
-        }
     }
 
 
@@ -120,14 +93,8 @@ public class StageSelectManager : MonoBehaviour
                     GameObject stageCloneChildStageButton = stageClone.transform.Find("StageButton").gameObject;
                     stageCloneChildStageButton.transform.Find("StageIdText").GetComponent<Text>().text = (tempStageId+tempDifficulty*stageSelectHeightNumber*stageSelectWidthNumber).ToString();
 
-                    // それぞれのステージボタンにステージIDと難易度を記録
-                    ButtonManager stageCloneChildStageButtonScript = stageCloneChildStageButton.GetComponent<ButtonManager>();
-                    stageCloneChildStageButtonScript.argStageId = tempStageId;
-                    stageCloneChildStageButtonScript.argDifficulty = tempDifficulty;
-
                     // もし1個前のステージがクリアしてなかったら鍵をかける
                     GameObject stageCloneChildStageLockImage = stageClone.transform.Find("StageLockImage").gameObject;
-                    // if(PlayerPrefs.GetInt(stageName, -1) >= 0) {
                     if(stageScore >= 0) {
                         stageCloneChildStageLockImage.SetActive(false);
                         stageCloneChildStageButton.SetActive(true);
@@ -138,10 +105,10 @@ public class StageSelectManager : MonoBehaviour
                         stageCloneChildStageLockImage.SetActive(true);
                         stageCloneChildStageButton.SetActive(false);
                     }
+
                     // 初心者用ステージの調整
                     if(stageName == "StageScore0_0") stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(true);
                     else stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(false);
-                    
                 }
             }
             // 最後に大元のレイヤーに付ける
@@ -184,10 +151,6 @@ public class StageSelectManager : MonoBehaviour
 
         // BGMの設定
         AudioManager.Instance.SetBGMAudioClip(bgmAudioClip);
-        SetBGM();
-
-        // SEの設定
-        SetSE();
 
         // 難易度の個数を取得
         difficultyUI = new GameObject[]{easyUI, normalUI, hardUI};
@@ -272,34 +235,6 @@ public class StageSelectManager : MonoBehaviour
         AudioManager.Instance.PlaySE("Decision");
         FadeManager.Instance.LoadScene(0.5f, "Start");
         defaultBannerView.Destroy();
-    }
-
-
-    /// <summary>
-    /// BGMのオンオフ
-    /// </summary>
-    public void OnClickBGMButton() {
-        AudioManager.Instance.PlaySE("Decision");
-        AudioManager.Instance.BGMStatus = !(AudioManager.Instance.BGMStatus);
-        if(AudioManager.Instance.BGMStatus == false) {
-            bgmButton.GetComponent<Image>().sprite = muteBGMSprite;
-        }else {
-            bgmButton.GetComponent<Image>().sprite = notMuteBGMSprite;
-        }
-    }
-
-
-    /// <summary>
-    /// SEのオンオフ
-    /// </summary>
-    public void OnClickSEButton() {
-        AudioManager.Instance.SEStatus = !(AudioManager.Instance.SEStatus);
-        if(AudioManager.Instance.SEStatus == false) {
-            seButton.GetComponent<Image>().sprite = muteSESprite;
-        }else {
-            seButton.GetComponent<Image>().sprite = notMuteSESprite;
-        }
-        AudioManager.Instance.PlaySE("Decision");
     }
 
     public void SetFadeOutFlagToMain() {

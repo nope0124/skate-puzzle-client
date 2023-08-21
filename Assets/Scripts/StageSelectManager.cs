@@ -4,18 +4,14 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using GoogleMobileAds.Api;
 
 public class StageSelectManager : MonoBehaviour
 {
     float EPS = 1e-5f;
 
-    private BannerView defaultBannerView;
-
-    static int currentDifficulty = 0;
-    const int difficultyNumber = 2;
-    static int currentStageId = 0;
-    const int stageNumber = 15;
+    static int currentDifficulty = 0; // 現在の難易度(easy, normal)
+    const int difficultyNumber = 2; // 難易度数
+    const int stageNumber = 15; // 一難易度のステージ数
 
     const int stageSelectWidth = 350;
     const int stageSelectHeight = 300;
@@ -27,7 +23,7 @@ public class StageSelectManager : MonoBehaviour
     const int selectLightWidth = 150;
     const int selectLightWidthCenter = 0; // SelectLightの水平方向の中心点
     const int selectLightHeightCenter = -270; // SelectLightの垂直方向の中心点
-    const int selectLightWidthNumber = difficultyNumber;
+    const int selectLightWidthNumber = difficultyNumber; // SelectLightの数は難易度数と同じ
 
 
     [SerializeField] GameObject easyUI;
@@ -54,34 +50,18 @@ public class StageSelectManager : MonoBehaviour
 
 
     [SerializeField] GameObject Test;
-    
-
-    void RequestDefaultBanner()
-    {
-        #if UNITY_IOS
-            string adUnitId = Const.CO.IPHONE_DEFAULT_BANNER;
-        #else
-            string adUnitId = "unexpected_platform";
-        #endif
-
-        defaultBannerView = new BannerView(adUnitId, AdSize.IABBanner, AdPosition.Bottom);
-        AdRequest request = new AdRequest.Builder().Build();
-
-        defaultBannerView.LoadAd(request);
-    }
-
 
     // ステージボタンの生成
     void GenerateStageSelectButton(int[] progresses) {
+        int stageId = 0;
         for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
             for(int y = 0; y < stageSelectHeightNumber; y++) {
                 for(int x = 0; x < stageSelectWidthNumber; x++) {
 
                     // ステージID、ステージ名、スコアを定義
-                    int tempStageId = y*stageSelectWidthNumber+x;
-                    string stageName = "StageScore" + tempDifficulty.ToString() + "_" + tempStageId.ToString();
+                    string stageName = "StageScore" + stageId.ToString();
                     // int stageScore = PlayerPrefs.GetInt(stageName, 0);
-                    int stageScore = progresses[tempStageId + tempDifficulty * (stageSelectHeightNumber * stageSelectWidthNumber)];
+                    int stageScore = progresses[stageId];
 
                     // positionを定めてステージを生成、難易度別の親に付ける
                     float stageClonePositionX = stageSelectWidthCenter+stageSelectWidth/(stageSelectWidthNumber-1)*x-stageSelectWidth/2.0f;
@@ -91,7 +71,7 @@ public class StageSelectManager : MonoBehaviour
 
                     // ステージ番号を表示
                     GameObject stageCloneChildStageButton = stageClone.transform.Find("StageButton").gameObject;
-                    stageCloneChildStageButton.transform.Find("StageIdText").GetComponent<Text>().text = (tempStageId+tempDifficulty*stageSelectHeightNumber*stageSelectWidthNumber).ToString();
+                    stageCloneChildStageButton.transform.Find("StageIdText").GetComponent<Text>().text = stageId.ToString();
 
                     // もし1個前のステージがクリアしてなかったら鍵をかける
                     GameObject stageCloneChildStageLockImage = stageClone.transform.Find("StageLockImage").gameObject;
@@ -109,6 +89,9 @@ public class StageSelectManager : MonoBehaviour
                     // 初心者用ステージの調整
                     if(stageName == "StageScore0_0") stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(true);
                     else stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(false);
+
+                    // stageIdをインクリメント
+                    stageId++;
                 }
             }
             // 最後に大元のレイヤーに付ける
@@ -146,8 +129,8 @@ public class StageSelectManager : MonoBehaviour
 
     void Start()
     {
-        MobileAds.Initialize(initStatus => { });
-        RequestDefaultBanner();
+        // バナー広告呼び出し
+        AdBannerManager.Instance.RequestDefaultBanner();
 
         // BGMの設定
         AudioManager.Instance.SetBGMAudioClip(bgmAudioClip);
@@ -200,16 +183,6 @@ public class StageSelectManager : MonoBehaviour
         }
     }
 
-
-    void Update()
-    {
-        if(fadeOutFlagToMain == true) {
-            fadeOutFlagToMain = false;
-            defaultBannerView.Destroy();
-            FadeManager.Instance.LoadScene(0.5f, "Main");
-        }
-    }
-
     /// <summary>
     /// 難易度ボタン
     /// </summary>
@@ -234,11 +207,7 @@ public class StageSelectManager : MonoBehaviour
     public void OnClickHomeButton() {
         AudioManager.Instance.PlaySE("Decision");
         FadeManager.Instance.LoadScene(0.5f, "Start");
-        defaultBannerView.Destroy();
-    }
-
-    public void SetFadeOutFlagToMain() {
-        fadeOutFlagToMain = true;
+        AdBannerManager.Instance.DestroyDefaultBanner();
     }
 
 }

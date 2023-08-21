@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using GoogleMobileAds.Api;
 using Firebase;
 using Firebase.Auth;
 using Firebase.Database;
@@ -21,8 +20,6 @@ public class StartManager : MonoBehaviour
 
     static int difficultyNumber = 2;
     static int stageNumber = 15;
-
-    private BannerView defaultBannerView;
 
     [SerializeField] Button idButton;
     [SerializeField] Text idButtonText;
@@ -55,21 +52,6 @@ public class StartManager : MonoBehaviour
 
     private bool userLoginFlag = false;
     private string userId;
-    
-
-    // void RequestDefaultBanner()
-    // {
-    //     #if UNITY_IOS
-    //         string adUnitId = Const.CO.IPHONE_DEFAULT_BANNER;
-    //     #else
-    //         string adUnitId = "unexpected_platform";
-    //     #endif
-
-    //     defaultBannerView = new BannerView(adUnitId, AdSize.IABBanner, AdPosition.Bottom);
-    //     AdRequest request = new AdRequest.Builder().Build();
-
-    //     defaultBannerView.LoadAd(request);
-    // }
     
 
     void Awake()
@@ -157,8 +139,8 @@ public class StartManager : MonoBehaviour
 
     void Start()
     {
-        // MobileAds.Initialize(initStatus => { });
-        // RequestDefaultBanner();
+        // バナー広告呼び出し
+        AdBannerManager.Instance.RequestDefaultBanner();
 
         // BGMの設定
         AudioManager.Instance.SetBGMAudioClip(null);
@@ -206,7 +188,7 @@ public class StartManager : MonoBehaviour
     public void OnClickStartButton()
     {
         AudioManager.Instance.PlaySE("Decision");
-        // defaultBannerView.Destroy();
+        AdBannerManager.Instance.DestroyDefaultBanner();
         FadeManager.Instance.LoadScene(0.5f, "StageSelect");
     }
 

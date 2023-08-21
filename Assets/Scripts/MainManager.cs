@@ -215,9 +215,6 @@ public class MainManager : MonoBehaviour
     }
 
 
-
-
-
     void AnimatorReset() {
         for(int i = 0; i < 4; i++) playerAnim.SetBool(ANIMATOR_DIR[i], false);
     }

@@ -16,10 +16,8 @@ public class MainManager : MonoBehaviour
         Ready,
         Playing,
         Pause,
-        Hint,
         Clear
     }
-    
 
     private GameState currentGameState = GameState.Ready;
     // Left Right Up Down
@@ -29,13 +27,8 @@ public class MainManager : MonoBehaviour
     string[] ANIMATOR_DIR = {"ToLeft", "ToRight", "ToUp", "ToDown"};
     float EPS = 1e-5f;
 
-    private BannerView defaultBannerView;
-    private InterstitialAd stageTransInterstitialAd;
-    private InterstitialAd hintInterstitialAd;
-
     [SerializeField] TileBase[] iceFloor;
     [SerializeField] TileBase[] iceBlock;
-    [SerializeField] TileBase snowBall;
     [SerializeField] TileBase[] snowFloor;
     [SerializeField] TileBase[] goalFloor;
 
@@ -55,11 +48,7 @@ public class MainManager : MonoBehaviour
 
     [SerializeField] Animator playerAnim;
 
-    [SerializeField] GameObject fadeImage;
-
     [SerializeField] GameObject[] DPadButton;
-    [SerializeField] Sprite[] blueButton;
-    [SerializeField] Sprite[] redButton;
 
     [SerializeField] AudioClip bgmAudioClip;
 
@@ -91,25 +80,13 @@ public class MainManager : MonoBehaviour
     // 基本的に長さは同じ
     int stageBoardGridWidth, stageBoardGridHeight;
 
-    bool isFinish = false;
-    bool reachedSnowBall = false;
-
     Vector3 targetPosition;
     Vector3 goalPosition;
-    Vector3Int snowBallPosition;
     [SerializeField] float moveSpeed = 1.0f;
     bool saveFlag = false;
 
 
-    bool fadeOutFlag = false;
-    bool fadeInFlag = true;
-    float fadeTimeCount = 1.0f;
-
-    bool hintFlag = false;
-    static int gamePlayCount = 0;
     int adPlayBorderCount = 7;
-    bool nextFlag = false;
-    // bool backFlag = false;
 
     Queue<int> hintMovesStack = new Queue<int>();
 
@@ -124,113 +101,12 @@ public class MainManager : MonoBehaviour
         set { currentStageId = value; }
     }
 
-    private void RequestDefaultBanner()
-    {
-        #if UNITY_IOS
-            string adUnitId = Const.CO.IPHONE_DEFAULT_BANNER;
-        #else
-            string adUnitId = "unexpected_platform";
-        #endif
-
-        defaultBannerView = new BannerView(adUnitId, AdSize.IABBanner, AdPosition.Top);
-        AdRequest request = new AdRequest.Builder().Build();
-
-        defaultBannerView.LoadAd(request);
-    }
-
-    private void RequestStageTransInterstitial()
-    {
-        // ★リリース時に自分のIDに変更する
-        #if UNITY_IOS
-            string adUnitId = Const.CO.IPHONE_STAGE_TRANS_INTERSTITIAL;
-        #else
-            string adUnitId = "unexpected_platform";
-        #endif
-
-        // Initialize an InterstitialAd.
-        stageTransInterstitialAd = new InterstitialAd(adUnitId);
-
-        // Called when an ad request has successfully loaded.
-        stageTransInterstitialAd.OnAdLoaded += HandleOnAdLoaded;
-        // Called when an ad request failed to load.
-        stageTransInterstitialAd.OnAdFailedToLoad += HandleOnAdFailedToLoad;
-        // Called when an ad is shown.
-        stageTransInterstitialAd.OnAdOpening += HandleOnAdOpened;
-        // Called when the ad is closed.
-        stageTransInterstitialAd.OnAdClosed += HandleOnAdClosed;
-        // Called when the ad click caused the user to leave the application.
-        stageTransInterstitialAd.OnAdDidRecordImpression += HandleOnAdLeavingApplication;
-
-        // Create an empty ad request.
-        AdRequest request = new AdRequest.Builder().Build();
-        // Load the interstitial with the request.
-        stageTransInterstitialAd.LoadAd(request);
-    }
-
-
-    private void OnDestroy()
-    {
-        // オブジェクトの破棄
-        stageTransInterstitialAd.Destroy();
-    }
-
-    // ---以下、イベントハンドラー
-    
-    // 広告の読み込み完了時
-    public void HandleOnAdLoaded(object sender, System.EventArgs args)
-    {
-    }
-
-    // 広告の読み込み失敗時
-    public void HandleOnAdFailedToLoad(object sender, AdFailedToLoadEventArgs args)
-    {
-        // 次のシーンに遷移
-        gamePlayCount = 0;
-        RequestStageTransInterstitial();
-        hintFlag = false;
-        // if(backFlag == true) {
-        //     backFlag = false;
-        //     SceneManager.LoadScene("StageSelect");
-        // }
-
-    }
-
-    // 広告がデバイスの画面いっぱいに表示されたとき
-    public void HandleOnAdOpened(object sender, System.EventArgs args)
-    {
-    }
-
-    // 広告を閉じたとき
-    public void HandleOnAdClosed(object sender, System.EventArgs args)
-    {
-        
-        // 次のシーンに遷移
-        if(hintFlag == true) {
-            gamePlayCount = Mathf.Max(0, gamePlayCount-2);
-            hintFlag = false;
-            RequestStageTransInterstitial();
-        } else if (nextFlag == true) {
-            gamePlayCount = 0;
-            nextFlag = false;
-            RequestStageTransInterstitial();
-        } else {
-            gamePlayCount = 0;
-            SceneManager.LoadScene("StageSelect");
-        }
-    }
-    
-    // 別のアプリ（Google Play ストアなど）を起動した時
-    public void HandleOnAdLeavingApplication(object sender, System.EventArgs args)
-    {
-    }
-
 
     void AnimatorReset() {
         for(int i = 0; i < 4; i++) playerAnim.SetBool(ANIMATOR_DIR[i], false);
     }
 
     void SetTileBoard(int x, int y, TileBase[] tempTile) {
-        // y = stageBoardGridHeight - y - 1;
         Vector3Int grid = new Vector3Int(x, y, 0);
         if(x == 0 && y == 0) { // 左下
             stageBoard.SetTile(grid, tempTile[6]);
@@ -264,9 +140,6 @@ public class MainManager : MonoBehaviour
                         break;
                     case 'x':
                         SetTileBoard(x, y, iceBlock);
-                        break;
-                    case '@':
-                        stageBoard.SetTile(grid, snowBall);
                         break;
                     case 'o':
                         SetTileBoard(x, y, snowFloor);
@@ -363,9 +236,7 @@ public class MainManager : MonoBehaviour
 
         Time.timeScale = 1.0f;
         saveFlag = false;
-        hintFlag = false;
         hintMovesStack.Clear();
-
 
         stageIdText.text = "STAGE: " + (currentStageId).ToString("000");
         turnCount = 0;
@@ -375,11 +246,6 @@ public class MainManager : MonoBehaviour
         }
 
         ButtonHintReset();
-
-        // // フェードイン
-        // fadeImage.SetActive(true);
-        // fadeInFlag = true;
-        // fadeOutFlag = false;
 
         // BGMの設定
         AudioManager.Instance.SetBGMAudioClip(bgmAudioClip);
@@ -396,31 +262,8 @@ public class MainManager : MonoBehaviour
 
         // 盤面のサイズを取得
         StartCoroutine(GetStageData(currentStageId));
-        // GetBoardScale();
-
-        // // 盤面の状態をコピー // ディープコピーの方法がわからない
-        // currentStageBoardGrid = new char[stageBoardGridHeight][];
-        // for(int i = 0; i < stageBoardGridHeight; i++) currentStageBoardGrid[i] = new char[stageBoardGridWidth];
-        // for(int i = 0; i < stageBoardGridHeight; i++) {
-        //     for(int j = 0; j < stageBoardGridWidth; j++) {
-        //         currentStageBoardGrid[i][j] = stageBoardGrid[i][j];
-        //     }
-        // }
-
-        // // 盤面の状態を反映
-        // SetTiles();
-
-        // // プレイヤー位置の初期化
-        // player.transform.position = new Vector3(startPointX+stageBoardWidth/2.0f, startPointY+stageBoardHeight/2.0f, 0.0f);
-        // currentPlayerX = startPointX; currentPlayerXOnBoard = startPointXOnBoard;
-        // currentPlayerY = startPointY; currentPlayerYOnBoard = startPointYOnBoard;
-        // player.transform.localScale = new Vector3(stageBoardWidth, stageBoardHeight, 1.0f);
-        // targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
-        // goalPosition = new Vector3(goalPointX+stageBoardWidth/2.0f, goalPointY+stageBoardHeight/2.0f, 0.0f);
-
+        
         // その他変数を初期化
-        isFinish = false;
-        reachedSnowBall = false;
         pausePanel.SetActive(false);
         clearPanel.SetActive(false);
     }
@@ -476,8 +319,8 @@ public class MainManager : MonoBehaviour
         // FirebaseApp.DefaultInstance.SetEditorDatabaseUrl(Const.CO.DATABASE_URL); // データベースのURLを設定
         // DatabaseReference scoreReference = FirebaseDatabase.DefaultInstance.RootReference.Child("users").Child(userId).Child("scores");
         MobileAds.Initialize(initStatus => { });
-        RequestDefaultBanner();
-        RequestStageTransInterstitial();
+        AdmobManager.Instance.RequestDefaultBanner("Top");
+        AdmobManager.Instance.RequestDefaultInterstitial();
         // 盤面のサイズを取得
         // 盤面のサイズを調整
         // 盤面の状態をコピー
@@ -489,7 +332,6 @@ public class MainManager : MonoBehaviour
 
     void Update()
     {
-        if(gamePlayCount >= 20) gamePlayCount = 20;
         turnCountText.text = "TURN: " + turnCount.ToString("000");
         
         switch (currentGameState) {
@@ -550,12 +392,6 @@ public class MainManager : MonoBehaviour
             int ny = currentPlayerYOnBoard + dy[i];
             if(nx < 0 || ny < 0 || nx >= stageBoardGridWidth || ny >= stageBoardGridHeight) break;
             if(currentStageBoardGrid[ny][nx] == '#' || currentStageBoardGrid[ny][nx] == 'x') break;
-            if(currentStageBoardGrid[ny][nx] == '@') {
-                currentStageBoardGrid[ny][nx] = '.';
-                snowBallPosition = new Vector3Int(nx, ny, 0);
-                reachedSnowBall = true;
-                break;
-            }
             if(currentStageBoardGrid[ny][nx] == 'S' || currentStageBoardGrid[ny][nx] == 'G' || currentStageBoardGrid[ny][nx] == 'o') {
                 currentPlayerXOnBoard += dx[i];
                 currentPlayerYOnBoard += dy[i];
@@ -570,9 +406,6 @@ public class MainManager : MonoBehaviour
         currentPlayerX = stageBoard.CellToWorld(grid).x;
         currentPlayerY = stageBoard.CellToWorld(grid).y;
         targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
-
-        // // もし到着場所がゴールならFinishフラグを立てる
-        // if(goalPointXOnBoard == currentPlayerXOnBoard && goalPointYOnBoard == currentPlayerYOnBoard) isFinish = true;
     }
 
     public void OnClickMoveButton(int i) {
@@ -587,7 +420,15 @@ public class MainManager : MonoBehaviour
                 playerAnim.SetBool(ANIMATOR_DIR[i], true);
                 hintMovesStack.Dequeue();
                 ButtonHintReset();
-                if(hintMovesStack.Count > 0) DPadButton[hintMovesStack.Peek()].GetComponent<Image>().sprite = redButton[hintMovesStack.Peek()];
+                if(hintMovesStack.Count > 0) {
+                    for(int j = 0; j < 4; j++) {
+                        if(j == hintMovesStack.Peek()) {
+                            DPadButton[j].GetComponent<Button>().interactable = true;
+                        }else {
+                            DPadButton[j].GetComponent<Button>().interactable = false;
+                        }
+                    }
+                }
             }else {
                 return;
             }
@@ -605,30 +446,30 @@ public class MainManager : MonoBehaviour
     public void OnClickPauseButton() {
         if(!(currentGameState == GameState.Ready)) return;
         AudioManager.Instance.PlaySE("Decision");
+        currentGameState = GameState.Pause;
         pausePanel.SetActive(true);
         Time.timeScale = 0.0f;
     }
 
     public void OnClickBackButton() {
-        if(!(currentGameState == GameState.Ready || currentGameState == GameState.Clear)) return;
+        if(!(currentGameState == GameState.Pause || currentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
         Time.timeScale = 1.0f;
-        defaultBannerView.Destroy();
+        AdmobManager.Instance.DestroyDefaultBanner();
         FadeManager.Instance.LoadScene(0.5f, "StageSelect");
     }
 
     public void OnClickRetryButton() {
-        if(!(currentGameState == GameState.Ready || currentGameState == GameState.Clear)) return;
+        if(!(currentGameState == GameState.Pause || currentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
         currentGameState = GameState.Ready;
-        gamePlayCount++;
         Init();
         pausePanel.SetActive(false);
         Time.timeScale = 1.0f;
     }
 
     public void OnClickPlayButton() {
-        if(!(currentGameState == GameState.Ready)) return;
+        if(!(currentGameState == GameState.Pause)) return;
         AudioManager.Instance.PlaySE("Decision");
         currentGameState = GameState.Ready;
         pausePanel.SetActive(false);
@@ -639,40 +480,31 @@ public class MainManager : MonoBehaviour
         if(!(currentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
         currentGameState = GameState.Ready;
-        gamePlayCount += 2;
-        currentStageId = (currentStageId+1) % stageNumber;
+        currentStageId = (currentStageId + 1) % stageNumber;
         Init();
-        if(gamePlayCount >= adPlayBorderCount) {
-            nextFlag = true;
-            stageTransInterstitialAd.Show();
-        }
     }
 
     public void OnClickHintButton() {
+        if(!(currentGameState == GameState.Ready)) return;
         AudioManager.Instance.PlaySE("Decision");
-        if(isFinish) return;
-        if (!hintPanel.activeSelf) {
-            hintPanel.SetActive(true);
-            Time.timeScale = 0.0f;
-        }
+        currentGameState = GameState.Pause;
+        hintPanel.SetActive(true);
+        Time.timeScale = 0.0f;
     }
 
     void ButtonHintReset() {
         for(int i = 0; i < 4; i++) {
-            DPadButton[i].GetComponent<Image>().sprite = blueButton[i];
+            DPadButton[i].GetComponent<Button>().interactable = true;
         }
     }
     
     public void OnClickHintYesButton() {
+        if(!(currentGameState == GameState.Pause)) return;
         AudioManager.Instance.PlaySE("Decision");
+        currentGameState = GameState.Ready;
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
-        // Init();
-        if(stageTransInterstitialAd.IsLoaded()) {
-            hintFlag = true;
-            // audioSource.GetComponent<AudioSource>().mute = true;
-            stageTransInterstitialAd.Show();
-        }
+        AdmobManager.Instance.ShowDefaultInterstitial();
         
         Stack<int> HINT = new Solver().Solve(currentStageBoardGrid, currentPlayerXOnBoard, currentPlayerYOnBoard);
         hintMovesStack.Clear();
@@ -681,12 +513,20 @@ public class MainManager : MonoBehaviour
         }
         ButtonHintReset();
         if(hintMovesStack.Count == 0) return;
-        DPadButton[hintMovesStack.Peek()].GetComponent<Image>().sprite = redButton[hintMovesStack.Peek()];
+        for(int i = 0; i < 4; i++) {
+            if(i == hintMovesStack.Peek()) {
+                DPadButton[i].GetComponent<Button>().interactable = true;
+            }else {
+                DPadButton[i].GetComponent<Button>().interactable = false;
+            }
+        }
     }
     
 
     public void OnClickHintNoButton() {
+        if(!(currentGameState == GameState.Pause)) return;
         AudioManager.Instance.PlaySE("Decision");
+        currentGameState = GameState.Ready;
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
     }

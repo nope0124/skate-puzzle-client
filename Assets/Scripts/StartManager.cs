@@ -140,7 +140,7 @@ public class StartManager : MonoBehaviour
     void Start()
     {
         // バナー広告呼び出し
-        AdBannerManager.Instance.RequestDefaultBanner();
+        AdmobManager.Instance.RequestDefaultBanner("Bottom");
 
         // BGMの設定
         AudioManager.Instance.SetBGMAudioClip(null);
@@ -188,7 +188,7 @@ public class StartManager : MonoBehaviour
     public void OnClickStartButton()
     {
         AudioManager.Instance.PlaySE("Decision");
-        AdBannerManager.Instance.DestroyDefaultBanner();
+        AdmobManager.Instance.DestroyDefaultBanner();
         FadeManager.Instance.LoadScene(0.5f, "StageSelect");
     }
 

@@ -697,7 +697,6 @@ Transform:
   - {fileID: 227190705}
   - {fileID: 1298667201}
   - {fileID: 1780194224}
-  - {fileID: 1456755596}
   m_Father: {fileID: 762913269}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2501,7 +2500,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2a8ed6e640b2f42f88b1b1ead873e12b, type: 2}
   - {fileID: 11400000, guid: 6a5b793479d844eeeb8b321170330c3f, type: 2}
   - {fileID: 11400000, guid: 2a9ba82363ca049479e7e6a384f76af1, type: 2}
-  snowBall: {fileID: 11400000, guid: da5556daa0aa84b2fb153416144f03c0, type: 2}
   snowFloor:
   - {fileID: 11400000, guid: 3b93b55fdb811404ca312fcaed3ed532, type: 2}
   - {fileID: 11400000, guid: 3efd99ca41a674905a4bf3cbc9da60d0, type: 2}
@@ -2534,28 +2532,11 @@ MonoBehaviour:
   hintPanel: {fileID: 1298667200}
   clearPanel: {fileID: 1780194223}
   playerAnim: {fileID: 789315995}
-  fadeImage: {fileID: 1456755595}
   DPadButton:
   - {fileID: 2034756830}
   - {fileID: 1217875374}
   - {fileID: 12356347}
   - {fileID: 1628989054}
-  blueButton:
-  - {fileID: 21300000, guid: 349b581a732a34d4c9cbe60c7c27117a, type: 3}
-  - {fileID: 21300000, guid: 9cdb5e082a6774e398ec009cb6f058c6, type: 3}
-  - {fileID: 21300000, guid: ef71680102cc24091bea9e063aec8193, type: 3}
-  - {fileID: 21300000, guid: 8dbf5978d4f224d6db26bff6121df22b, type: 3}
-  redButton:
-  - {fileID: 21300000, guid: f1813225d93a44b0799bfe8239cf71db, type: 3}
-  - {fileID: 21300000, guid: 707ffccd686da4538b8afceb4755a433, type: 3}
-  - {fileID: 21300000, guid: 2a63a91e6c6624804a91f8f508c1965b, type: 3}
-  - {fileID: 21300000, guid: 288aae30226be4d07ae11d4d5758266f, type: 3}
-  muteBGMSprite: {fileID: 21300000, guid: 939554680c6e64c55a63f490e02f5748, type: 3}
-  notMuteBGMSprite: {fileID: 21300000, guid: 948826d2fb3f04d549a39abc60a7e9fd, type: 3}
-  muteSESprite: {fileID: 21300000, guid: c5099d5d666b348cf8557eb56b81e450, type: 3}
-  notMuteSESprite: {fileID: 21300000, guid: 1c933306e1d38487fbcb4b0898711835, type: 3}
-  bgmButton: {fileID: 389237285}
-  seButton: {fileID: 840723661}
   bgmAudioClip: {fileID: 8300000, guid: 476dc0182dc954456a7ceedaf0fbc9c2, type: 3}
   stageIdText: {fileID: 210946187}
   turnCountText: {fileID: 708372805}
@@ -3199,80 +3180,6 @@ Transform:
   m_Father: {fileID: 322026493}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1456755595
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1456755596}
-  - component: {fileID: 1456755598}
-  - component: {fileID: 1456755597}
-  m_Layer: 5
-  m_Name: FadeImage
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!224 &1456755596
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1456755595}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 322026493}
-  m_RootOrder: 3
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1024, y: 1824}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1456755597
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1456755595}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.2, g: 0.2, b: 0.2, a: 0}
-  m_RaycastTarget: 1
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &1456755598
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1456755595}
-  m_CullTransparentMesh: 0
 --- !u!1 &1540615083
 GameObject:
   m_ObjectHideFlags: 0

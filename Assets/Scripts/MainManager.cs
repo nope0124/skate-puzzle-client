@@ -11,6 +11,17 @@ using Firebase.Database;
 
 public class MainManager : MonoBehaviour
 {
+    public enum GameState
+    {
+        Ready,
+        Playing,
+        Pause,
+        Hint,
+        Clear
+    }
+    
+
+    private GameState currentGameState = GameState.Ready;
     // Left Right Up Down
     private string baseURL = "http://localhost:3000";
     int[] dx = {-1, 1, 0, 0};
@@ -87,7 +98,7 @@ public class MainManager : MonoBehaviour
     Vector3 goalPosition;
     Vector3Int snowBallPosition;
     [SerializeField] float moveSpeed = 1.0f;
-    bool clearFlag = false;
+    bool saveFlag = false;
 
 
     bool fadeOutFlag = false;
@@ -99,7 +110,6 @@ public class MainManager : MonoBehaviour
     int adPlayBorderCount = 7;
     bool nextFlag = false;
     // bool backFlag = false;
-    bool moveFlag = false;
 
     Queue<int> hintMovesStack = new Queue<int>();
 
@@ -220,6 +230,7 @@ public class MainManager : MonoBehaviour
     }
 
     void SetTileBoard(int x, int y, TileBase[] tempTile) {
+        // y = stageBoardGridHeight - y - 1;
         Vector3Int grid = new Vector3Int(x, y, 0);
         if(x == 0 && y == 0) { // 左下
             stageBoard.SetTile(grid, tempTile[6]);
@@ -333,6 +344,15 @@ public class MainManager : MonoBehaviour
                 targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
                 goalPosition = new Vector3(goalPointX+stageBoardWidth/2.0f, goalPointY+stageBoardHeight/2.0f, 0.0f);
 
+                // 盤面の状態をコピー // ディープコピーの方法がわからない
+                currentStageBoardGrid = new char[stageBoardGridHeight][];
+                for(int i = 0; i < stageBoardGridHeight; i++) currentStageBoardGrid[i] = new char[stageBoardGridWidth];
+                for(int i = 0; i < stageBoardGridHeight; i++) {
+                    for(int j = 0; j < stageBoardGridWidth; j++) {
+                        currentStageBoardGrid[i][j] = stageBoardGrid[i][j];
+                    }
+                }
+
                 Test.SetActive(false);
             }
         }
@@ -342,9 +362,8 @@ public class MainManager : MonoBehaviour
     void Init() {
 
         Time.timeScale = 1.0f;
-        clearFlag = false;
+        saveFlag = false;
         hintFlag = false;
-        moveFlag = false;
         hintMovesStack.Clear();
 
 
@@ -379,14 +398,14 @@ public class MainManager : MonoBehaviour
         StartCoroutine(GetStageData(currentStageId));
         // GetBoardScale();
 
-        // 盤面の状態をコピー // ディープコピーの方法がわからない
-        currentStageBoardGrid = new char[stageBoardGridHeight][];
-        for(int i = 0; i < stageBoardGridHeight; i++) currentStageBoardGrid[i] = new char[stageBoardGridWidth];
-        for(int i = 0; i < stageBoardGridHeight; i++) {
-            for(int j = 0; j < stageBoardGridWidth; j++) {
-                currentStageBoardGrid[i][j] = stageBoardGrid[i][j];
-            }
-        }
+        // // 盤面の状態をコピー // ディープコピーの方法がわからない
+        // currentStageBoardGrid = new char[stageBoardGridHeight][];
+        // for(int i = 0; i < stageBoardGridHeight; i++) currentStageBoardGrid[i] = new char[stageBoardGridWidth];
+        // for(int i = 0; i < stageBoardGridHeight; i++) {
+        //     for(int j = 0; j < stageBoardGridWidth; j++) {
+        //         currentStageBoardGrid[i][j] = stageBoardGrid[i][j];
+        //     }
+        // }
 
         // // 盤面の状態を反映
         // SetTiles();
@@ -406,6 +425,50 @@ public class MainManager : MonoBehaviour
         clearPanel.SetActive(false);
     }
 
+
+    void saveData() {
+        string stageName = "StageScore" + currentStageId.ToString();
+        string stageNameUnlock = "StageScore" + ((currentStageId + 1) % stageNumber).ToString();
+        int tempScore = PlayerPrefs.GetInt(stageName, 0);
+        int distance = new Solver().GetOptMoves(stageBoardGrid);
+        string userId = PlayerPrefs.GetString("user_id");
+        if(userId == "") {
+            if(turnCount <= distance) {
+                AudioManager.Instance.PlaySE("Clear");
+                clearScore[2].SetActive(true);
+                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
+            }else if(turnCount <= distance*2) {
+                clearScore[1].SetActive(true);
+                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
+            }else {
+                clearScore[0].SetActive(true);
+                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
+            }
+        }else {
+            FirebaseDatabase.GetInstance(Const.CO.DATABASE_URL); // データベースのURLを設定
+            DatabaseReference databaseRoot = FirebaseDatabase.DefaultInstance.RootReference; // ルートを作成
+            DatabaseReference scoreReference = databaseRoot.Child("users").Child(userId).Child("scores");
+            Dictionary<string, object> childUpdates = new Dictionary<string, object>();
+            difficultyName = new string[]{"easy", "normal", "hard"};
+            if(turnCount <= distance) {
+                AudioManager.Instance.PlaySE("Clear");
+                clearScore[2].SetActive(true);
+                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
+            }else if(turnCount <= distance*2) {
+                clearScore[1].SetActive(true);
+                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
+            }else {
+                clearScore[0].SetActive(true);
+                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
+            }
+            // childUpdates["/"+difficultyName[currentDifficulty]+"/"+currentStageId.ToString()] = PlayerPrefs.GetInt(stageName);
+            // if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) {
+            //     PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(0, PlayerPrefs.GetInt(stageNameUnlock)));
+            //     childUpdates["/"+difficultyName[(currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber]+"/"+((currentStageId+1) % stageNumber).ToString()] = PlayerPrefs.GetInt(stageNameUnlock);
+            // }
+            // scoreReference.UpdateChildrenAsync(childUpdates);
+        }
+    }
 
     void Start()
     {
@@ -428,108 +491,54 @@ public class MainManager : MonoBehaviour
     {
         if(gamePlayCount >= 20) gamePlayCount = 20;
         turnCountText.text = "TURN: " + turnCount.ToString("000");
-
         
-        // if(fadeOutFlag) {
-        //     Time.timeScale = 1.0f;
-        //     fadeTimeCount += Time.deltaTime * 2;
-        //     fadeImage.GetComponent<Image>().color = new Color((float)51.0f/255.0f, (float)51.0f/255.0f, (float)51.0f/255.0f, Mathf.Min(1.0f, fadeTimeCount));
-        //     if(fadeTimeCount > 1.0f+EPS) {
-        //         fadeTimeCount = 1.0f;
-        //         if(stageTransInterstitialAd.IsLoaded() && gamePlayCount >= adPlayBorderCount) {
-        //             audioSource.GetComponent<AudioSource>().mute = true;
-        //             stageTransInterstitialAd.Show();
-        //             fadeOutFlag = false;
-        //             backFlag = true;
-        //         }else {
-        //             SceneManager.LoadScene("StageSelect");
-        //         }
-        //     }
-        //     return;
-        // }
+        switch (currentGameState) {
+            case GameState.Ready:
+                break;
+            case GameState.Pause:
+                break;
 
+            case GameState.Playing:
+                // Playerを動かす
+                player.transform.position = Vector3.MoveTowards(player.transform.position, targetPosition, moveSpeed * Time.deltaTime);
 
-        if(isFinish && (player.transform.position - goalPosition).magnitude <= EPS) { //ゴールに着いている状態
-            if(clearFlag == false) { //1回だけ
-                
-                playerAnim.SetFloat("MovingSpeed", 0.0f);
+                // targetPositionに着いたら状態を遷移させる
+                if((player.transform.position - goalPosition).magnitude <= EPS) {
+                    currentGameState = GameState.Clear;
+                    return;
+                }else if((player.transform.position - targetPosition).magnitude <= EPS) {
+                    currentGameState = GameState.Ready;
+                    playerAnim.SetFloat("MovingSpeed", 0.0f);
+                    playerAnim.Play(playerAnim.GetCurrentAnimatorStateInfo(0).nameHash, 0, 0.0f);
+                    return;
+                }
 
-                AnimatorReset();
-                playerAnim.SetBool("ToDown", true);
+                // 氷タイルだったらアニメーションを止める
+                if(stageBoardGrid[stageBoard.WorldToCell(player.transform.position).y][stageBoard.WorldToCell(player.transform.position).x] == '.') {
+                    playerAnim.SetFloat("MovingSpeed", 0.0f);
+                }else {
+                    playerAnim.SetFloat("MovingSpeed", 1.0f);
+                }
 
-                // RequestPauseBanner();
+                break;
+
+            case GameState.Clear:
+                playerAnim.SetFloat("MovingSpeed", 0.0f); // 止める
+                AnimatorReset(); // 一回だけ
+                playerAnim.SetBool("ToDown", true); // リトライ後も下を向くように
                 clearPanel.SetActive(true);
 
-                string stageName = "StageScore" + currentStageId.ToString();
-                string stageNameUnlock = "StageScore" + ((currentStageId + 1) % stageNumber).ToString();
-                int tempScore = PlayerPrefs.GetInt(stageName, 0);
-                int distance = new Solver().GetOptMoves(stageBoardGrid);
-                string userId = PlayerPrefs.GetString("user_id");
-                if(userId == "") {
-                    if(turnCount <= distance) {
-                        AudioManager.Instance.PlaySE("Clear");
-                        clearScore[2].SetActive(true);
-                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
-                    }else if(turnCount <= distance*2) {
-                        clearScore[1].SetActive(true);
-                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
-                    }else {
-                        clearScore[0].SetActive(true);
-                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
-                    }
-                    // if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) {
-                    //     PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(0, PlayerPrefs.GetInt(stageNameUnlock)));
-                    // }
-                }else {
-                    FirebaseDatabase.GetInstance(Const.CO.DATABASE_URL); // データベースのURLを設定
-                    // FirebaseApp.DefaultInstance.SetEditorDatabaseUrl(Const.CO.DATABASE_URL); // データベースのURLを設定
-                    DatabaseReference databaseRoot = FirebaseDatabase.DefaultInstance.RootReference; // ルートを作成
-                    DatabaseReference scoreReference = databaseRoot.Child("users").Child(userId).Child("scores");
-                    Dictionary<string, object> childUpdates = new Dictionary<string, object>();
-                    difficultyName = new string[]{"easy", "normal", "hard"};
-                    if(turnCount <= distance) {
-                        AudioManager.Instance.PlaySE("Clear");
-                        clearScore[2].SetActive(true);
-                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
-                    }else if(turnCount <= distance*2) {
-                        clearScore[1].SetActive(true);
-                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
-                    }else {
-                        clearScore[0].SetActive(true);
-                        PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
-                    }
-                    // childUpdates["/"+difficultyName[currentDifficulty]+"/"+currentStageId.ToString()] = PlayerPrefs.GetInt(stageName);
-                    // if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) {
-                    //     PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(0, PlayerPrefs.GetInt(stageNameUnlock)));
-                    //     childUpdates["/"+difficultyName[(currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber]+"/"+((currentStageId+1) % stageNumber).ToString()] = PlayerPrefs.GetInt(stageNameUnlock);
-                    // }
-                    // scoreReference.UpdateChildrenAsync(childUpdates);
+                if(saveFlag == false) { //1回だけセーブ
+                    saveData();
+                    saveFlag = true;
                 }
-            
-                clearFlag = true;
-            }
-        }else if(reachedSnowBall && (player.transform.position - targetPosition).magnitude <= EPS) { // 雪玉に当たった状態
-            playerAnim.SetFloat("MovingSpeed", 0.0f);
-            reachedSnowBall = false;
-            SetTileBoard(snowBallPosition.x, snowBallPosition.y, iceFloor);
-        }else if((player.transform.position - targetPosition).magnitude <= EPS) { //目的地に着き、止まっている状態
-            playerAnim.SetFloat("MovingSpeed", 0.0f);
-            if(moveFlag == true) {
-                moveFlag = false;
-            }else {
-                playerAnim.Play(playerAnim.GetCurrentAnimatorStateInfo(0).nameHash, 0, 0.0f);
-            }
-        }else { //目的地に進んでいる状態
-            if(stageBoardGrid[stageBoard.WorldToCell(player.transform.position).y][stageBoard.WorldToCell(player.transform.position).x] == '.') {
-                playerAnim.SetFloat("MovingSpeed", 0.0f);
-            }else {
-                playerAnim.SetFloat("MovingSpeed", 1.0f);
-            }
-            player.transform.position = Vector3.MoveTowards(player.transform.position, targetPosition, moveSpeed * Time.deltaTime);
-            // Debug.Log((player.transform.position - targetPosition).magnitude.ToString("F15"));
-            // Debug.Log((player.transform.position - goalPosition).magnitude.ToString("F15"));
+
+                break;
+
+            default:
+                break;
+
         }
-        
     }
 
 
@@ -562,15 +571,13 @@ public class MainManager : MonoBehaviour
         currentPlayerY = stageBoard.CellToWorld(grid).y;
         targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
 
-        // もし到着場所がゴールならFinishフラグを立てる
-        if(goalPointXOnBoard == currentPlayerXOnBoard && goalPointYOnBoard == currentPlayerYOnBoard) isFinish = true;
+        // // もし到着場所がゴールならFinishフラグを立てる
+        // if(goalPointXOnBoard == currentPlayerXOnBoard && goalPointYOnBoard == currentPlayerYOnBoard) isFinish = true;
     }
 
     public void OnClickMoveButton(int i) {
-        if((player.transform.position - targetPosition).magnitude > EPS) return; // 目的地に移動していたらreturn
-        if(isFinish) return; // 目的地がゴールだったらreturn
-        if(reachedSnowBall) return; // 目的地が雪玉だったらreturn
-        moveFlag = true;
+        if(!(currentGameState == GameState.Ready)) return;
+        currentGameState = GameState.Playing;
         if(hintMovesStack.Count > 0) {
             if(i == hintMovesStack.Peek()) {
                 MovePlayer(i);
@@ -596,15 +603,14 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickPauseButton() {
+        if(!(currentGameState == GameState.Ready)) return;
         AudioManager.Instance.PlaySE("Decision");
-        if(isFinish) return;
-        if(!pausePanel.activeSelf) {
-            pausePanel.SetActive(true);
-            Time.timeScale = 0.0f;
-        }
+        pausePanel.SetActive(true);
+        Time.timeScale = 0.0f;
     }
 
     public void OnClickBackButton() {
+        if(!(currentGameState == GameState.Ready || currentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
         Time.timeScale = 1.0f;
         defaultBannerView.Destroy();
@@ -612,7 +618,9 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickRetryButton() {
+        if(!(currentGameState == GameState.Ready || currentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
+        currentGameState = GameState.Ready;
         gamePlayCount++;
         Init();
         pausePanel.SetActive(false);
@@ -620,9 +628,24 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickPlayButton() {
+        if(!(currentGameState == GameState.Ready)) return;
         AudioManager.Instance.PlaySE("Decision");
+        currentGameState = GameState.Ready;
         pausePanel.SetActive(false);
         Time.timeScale = 1.0f;
+    }
+
+    public void OnClickNextButton() {
+        if(!(currentGameState == GameState.Clear)) return;
+        AudioManager.Instance.PlaySE("Decision");
+        currentGameState = GameState.Ready;
+        gamePlayCount += 2;
+        currentStageId = (currentStageId+1) % stageNumber;
+        Init();
+        if(gamePlayCount >= adPlayBorderCount) {
+            nextFlag = true;
+            stageTransInterstitialAd.Show();
+        }
     }
 
     public void OnClickHintButton() {
@@ -666,24 +689,6 @@ public class MainManager : MonoBehaviour
         AudioManager.Instance.PlaySE("Decision");
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
-    }
-
-
-
-    public void OnClickNextButton() {
-        AudioManager.Instance.PlaySE("Decision");
-        gamePlayCount += 2;
-        currentStageId = (currentStageId+1) % stageNumber;
-        Init();
-        if(gamePlayCount >= adPlayBorderCount) {
-            nextFlag = true;
-            stageTransInterstitialAd.Show();
-        }
-    }
-
-
-    public void SetCurrentStageId(int argStageId) {
-        currentStageId = argStageId;
     }
 
 }

@@ -5,22 +5,30 @@ using UnityEngine.UI;
 using UnityEngine.Tilemaps;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using GoogleMobileAds.Api;
 using Firebase;
 using Firebase.Database;
 
 public class MainManager : MonoBehaviour
 {
-    public enum GameState
+    private static MainManager singleton;
+
+    public static MainManager Instance
     {
-        Ready,
-        Playing,
-        Pause,
-        Clear
+        get { return singleton; }
     }
 
-    private GameState currentGameState = GameState.Ready;
-    // Left Right Up Down
+    void Awake()
+    {
+        if (singleton == null)
+        {
+            singleton = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
     private string baseURL = "http://localhost:3000";
     int[] dx = {-1, 1, 0, 0};
     int[] dy = {0, 0, 1, -1};
@@ -36,11 +44,7 @@ public class MainManager : MonoBehaviour
     [SerializeField] GameObject player;
     
     [SerializeField] GameObject gridLayer;
-
-    [SerializeField] GameObject unitLayer;
-    [SerializeField] GameObject UILayer;
-    [SerializeField] GameObject buttonLayer;
-    [SerializeField] GameObject effectLayer;
+    [SerializeField] GameObject messageLayer;
 
     [SerializeField] GameObject pausePanel;
     [SerializeField] GameObject hintPanel;
@@ -48,17 +52,19 @@ public class MainManager : MonoBehaviour
 
     [SerializeField] Animator playerAnim;
 
-    [SerializeField] GameObject[] DPadButton;
+    [SerializeField] Button[] DPadButton;
 
     [SerializeField] AudioClip bgmAudioClip;
 
     [SerializeField] Text stageIdText;
     [SerializeField] Text turnCountText;
 
-    [SerializeField] GameObject[] clearScore;
+    [SerializeField] Button[] clearScore;
 
 
     [SerializeField] GameObject Test;
+
+    private bool isTutorial = false;
     
 
 
@@ -82,11 +88,8 @@ public class MainManager : MonoBehaviour
 
     Vector3 targetPosition;
     Vector3 goalPosition;
-    [SerializeField] float moveSpeed = 1.0f;
+    [SerializeField] float moveSpeed = 3.0f;
     bool saveFlag = false;
-
-
-    int adPlayBorderCount = 7;
 
     Queue<int> hintMovesStack = new Queue<int>();
 
@@ -187,6 +190,7 @@ public class MainManager : MonoBehaviour
 
     IEnumerator GetStageData(int stage_id)
     {
+        Test.SetActive(true);
         string url = baseURL + "/api/v1/stages/" + (stage_id + 1).ToString();
         Debug.Log(url);
         UnityWebRequest request = UnityWebRequest.Get(url);
@@ -232,7 +236,61 @@ public class MainManager : MonoBehaviour
     }
 
 
+    IEnumerator PostStageData(int stage_id)
+    {
+        Test.SetActive(true);
+        string url = baseURL + "/api/v1/stages/" + (stage_id + 1).ToString();
+        Debug.Log(url);
+        UnityWebRequest request = UnityWebRequest.Get(url);
+        yield return request.SendWebRequest();
+
+        if (request.isNetworkError)
+        {
+            Debug.Log(request.error);
+        }
+        else
+        {
+            if(request.responseCode == 200)
+            {
+                // JSONデータをC#オブジェクトにデシリアライズ
+                GetStageBoardResponse data = JsonUtility.FromJson<GetStageBoardResponse>(request.downloadHandler.text);
+
+                Debug.Log(data.width);
+                Debug.Log(data.height);
+                Debug.Log(data.board);
+                GetBoardScale(data.width, data.height, data.board);
+                // 盤面の状態を反映
+                SetTiles();
+                // プレイヤー位置の初期化
+                player.transform.position = new Vector3(startPointX+stageBoardWidth/2.0f, startPointY+stageBoardHeight/2.0f, 0.0f);
+                currentPlayerX = startPointX; currentPlayerXOnBoard = startPointXOnBoard;
+                currentPlayerY = startPointY; currentPlayerYOnBoard = startPointYOnBoard;
+                player.transform.localScale = new Vector3(stageBoardWidth, stageBoardHeight, 1.0f);
+                targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
+                goalPosition = new Vector3(goalPointX+stageBoardWidth/2.0f, goalPointY+stageBoardHeight/2.0f, 0.0f);
+
+                // 盤面の状態をコピー // ディープコピーの方法がわからない
+                currentStageBoardGrid = new char[stageBoardGridHeight][];
+                for(int i = 0; i < stageBoardGridHeight; i++) currentStageBoardGrid[i] = new char[stageBoardGridWidth];
+                for(int i = 0; i < stageBoardGridHeight; i++) {
+                    for(int j = 0; j < stageBoardGridWidth; j++) {
+                        currentStageBoardGrid[i][j] = stageBoardGrid[i][j];
+                    }
+                }
+
+                Test.SetActive(false);
+            }
+        }
+    }
+
+    
     void Init() {
+        if (currentStageId == 0) {
+            isTutorial = true;
+        }else {
+            isTutorial = false;
+        }
+        opeIndex = 0;
 
         Time.timeScale = 1.0f;
         saveFlag = false;
@@ -241,9 +299,9 @@ public class MainManager : MonoBehaviour
         stageIdText.text = "STAGE: " + (currentStageId).ToString("000");
         turnCount = 0;
 
-        for(int i = 0; i < 3; i++) {
-            clearScore[i].SetActive(false);
-        }
+        // for(int i = 0; i < 3; i++) {
+        //     clearScore[i].SetActive(false);
+        // }
 
         ButtonHintReset();
 
@@ -276,15 +334,18 @@ public class MainManager : MonoBehaviour
         int distance = new Solver().GetOptMoves(stageBoardGrid);
         string userId = PlayerPrefs.GetString("user_id");
         if(userId == "") {
-            if(turnCount <= distance) {
+            if(turnCount <= distance || isTutorial) {
                 AudioManager.Instance.PlaySE("Clear");
-                clearScore[2].SetActive(true);
+                clearScore[0].interactable = true;
+                clearScore[1].interactable = true;
                 PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
             }else if(turnCount <= distance*2) {
-                clearScore[1].SetActive(true);
+                clearScore[0].interactable = true;
+                clearScore[1].interactable = false;
                 PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
             }else {
-                clearScore[0].SetActive(true);
+                clearScore[0].interactable = false;
+                clearScore[1].interactable = false;
                 PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
             }
         }else {
@@ -293,15 +354,18 @@ public class MainManager : MonoBehaviour
             DatabaseReference scoreReference = databaseRoot.Child("users").Child(userId).Child("scores");
             Dictionary<string, object> childUpdates = new Dictionary<string, object>();
             difficultyName = new string[]{"easy", "normal", "hard"};
-            if(turnCount <= distance) {
+            if(turnCount <= distance || isTutorial) {
                 AudioManager.Instance.PlaySE("Clear");
-                clearScore[2].SetActive(true);
+                clearScore[0].interactable = true;
+                clearScore[1].interactable = true;
                 PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
             }else if(turnCount <= distance*2) {
-                clearScore[1].SetActive(true);
+                clearScore[0].interactable = true;
+                clearScore[1].interactable = false;
                 PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
             }else {
-                clearScore[0].SetActive(true);
+                clearScore[0].interactable = false;
+                clearScore[1].interactable = false;
                 PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
             }
             // childUpdates["/"+difficultyName[currentDifficulty]+"/"+currentStageId.ToString()] = PlayerPrefs.GetInt(stageName);
@@ -315,10 +379,12 @@ public class MainManager : MonoBehaviour
 
     void Start()
     {
+        if (currentStageId == 0) {
+            isTutorial = true;
+        }
         // userId = PlayerPrefs.GetString("user_id");
         // FirebaseApp.DefaultInstance.SetEditorDatabaseUrl(Const.CO.DATABASE_URL); // データベースのURLを設定
         // DatabaseReference scoreReference = FirebaseDatabase.DefaultInstance.RootReference.Child("users").Child(userId).Child("scores");
-        MobileAds.Initialize(initStatus => { });
         AdmobManager.Instance.RequestDefaultBanner("Top");
         AdmobManager.Instance.RequestDefaultInterstitial();
         // 盤面のサイズを取得
@@ -330,26 +396,39 @@ public class MainManager : MonoBehaviour
     }
     
 
+    public void LimitDPadAction(int[] okIds) {
+        for(int i = 0; i < 4; i++) DPadButton[i].interactable = false;
+        if(okIds.Length == 0) return;
+        foreach(int okId in okIds) DPadButton[okId].interactable = true;
+    }
+
     void Update()
     {
         turnCountText.text = "TURN: " + turnCount.ToString("000");
-        
-        switch (currentGameState) {
+        switch (GameManager.Instance.CurrentGameState) {
             case GameState.Ready:
+                if(isTutorial) {
+                    Tutorial();
+                }else { // チュートリアル以外では制限なし
+                    LimitDPadAction(new int[]{0, 1, 2, 3});
+                }
                 break;
             case GameState.Pause:
                 break;
 
             case GameState.Playing:
+                // ボタンを押せないように
+                LimitDPadAction(new int[]{});
+
                 // Playerを動かす
                 player.transform.position = Vector3.MoveTowards(player.transform.position, targetPosition, moveSpeed * Time.deltaTime);
 
                 // targetPositionに着いたら状態を遷移させる
                 if((player.transform.position - goalPosition).magnitude <= EPS) {
-                    currentGameState = GameState.Clear;
+                    GameManager.Instance.CurrentGameState = GameState.Clear;
                     return;
                 }else if((player.transform.position - targetPosition).magnitude <= EPS) {
-                    currentGameState = GameState.Ready;
+                    GameManager.Instance.CurrentGameState = GameState.Ready;
                     playerAnim.SetFloat("MovingSpeed", 0.0f);
                     playerAnim.Play(playerAnim.GetCurrentAnimatorStateInfo(0).nameHash, 0, 0.0f);
                     return;
@@ -409,8 +488,9 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickMoveButton(int i) {
-        if(!(currentGameState == GameState.Ready)) return;
-        currentGameState = GameState.Playing;
+        if(!(GameManager.Instance.CurrentGameState == GameState.Ready)) return;
+        if(isTutorial) opeIndex++;
+        GameManager.Instance.CurrentGameState = GameState.Playing;
         if(hintMovesStack.Count > 0) {
             if(i == hintMovesStack.Peek()) {
                 MovePlayer(i);
@@ -421,13 +501,7 @@ public class MainManager : MonoBehaviour
                 hintMovesStack.Dequeue();
                 ButtonHintReset();
                 if(hintMovesStack.Count > 0) {
-                    for(int j = 0; j < 4; j++) {
-                        if(j == hintMovesStack.Peek()) {
-                            DPadButton[j].GetComponent<Button>().interactable = true;
-                        }else {
-                            DPadButton[j].GetComponent<Button>().interactable = false;
-                        }
-                    }
+                    LimitDPadAction(new int[]{hintMovesStack.Peek()});
                 }
             }else {
                 return;
@@ -444,15 +518,15 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickPauseButton() {
-        if(!(currentGameState == GameState.Ready)) return;
+        if(!(GameManager.Instance.CurrentGameState == GameState.Ready)) return;
         AudioManager.Instance.PlaySE("Decision");
-        currentGameState = GameState.Pause;
+        GameManager.Instance.CurrentGameState = GameState.Pause;
         pausePanel.SetActive(true);
         Time.timeScale = 0.0f;
     }
 
     public void OnClickBackButton() {
-        if(!(currentGameState == GameState.Pause || currentGameState == GameState.Clear)) return;
+        if(!(GameManager.Instance.CurrentGameState == GameState.Pause || GameManager.Instance.CurrentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
         Time.timeScale = 1.0f;
         AdmobManager.Instance.DestroyDefaultBanner();
@@ -460,48 +534,48 @@ public class MainManager : MonoBehaviour
     }
 
     public void OnClickRetryButton() {
-        if(!(currentGameState == GameState.Pause || currentGameState == GameState.Clear)) return;
+        if(!(GameManager.Instance.CurrentGameState == GameState.Pause || GameManager.Instance.CurrentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
-        currentGameState = GameState.Ready;
+        GameManager.Instance.CurrentGameState = GameState.Ready;
         Init();
         pausePanel.SetActive(false);
         Time.timeScale = 1.0f;
     }
 
     public void OnClickPlayButton() {
-        if(!(currentGameState == GameState.Pause)) return;
+        if(!(GameManager.Instance.CurrentGameState == GameState.Pause)) return;
         AudioManager.Instance.PlaySE("Decision");
-        currentGameState = GameState.Ready;
+        GameManager.Instance.CurrentGameState = GameState.Ready;
         pausePanel.SetActive(false);
         Time.timeScale = 1.0f;
     }
 
     public void OnClickNextButton() {
-        if(!(currentGameState == GameState.Clear)) return;
+        if(!(GameManager.Instance.CurrentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
-        currentGameState = GameState.Ready;
+        GameManager.Instance.CurrentGameState = GameState.Ready;
         currentStageId = (currentStageId + 1) % stageNumber;
         Init();
     }
 
     public void OnClickHintButton() {
-        if(!(currentGameState == GameState.Ready)) return;
+        if(!(GameManager.Instance.CurrentGameState == GameState.Ready)) return;
         AudioManager.Instance.PlaySE("Decision");
-        currentGameState = GameState.Pause;
+        GameManager.Instance.CurrentGameState = GameState.Pause;
         hintPanel.SetActive(true);
         Time.timeScale = 0.0f;
     }
 
     void ButtonHintReset() {
         for(int i = 0; i < 4; i++) {
-            DPadButton[i].GetComponent<Button>().interactable = true;
+            DPadButton[i].interactable = true;
         }
     }
     
     public void OnClickHintYesButton() {
-        if(!(currentGameState == GameState.Pause)) return;
+        if(!(GameManager.Instance.CurrentGameState == GameState.Pause)) return;
         AudioManager.Instance.PlaySE("Decision");
-        currentGameState = GameState.Ready;
+        GameManager.Instance.CurrentGameState = GameState.Ready;
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
         AdmobManager.Instance.ShowDefaultInterstitial();
@@ -513,22 +587,60 @@ public class MainManager : MonoBehaviour
         }
         ButtonHintReset();
         if(hintMovesStack.Count == 0) return;
-        for(int i = 0; i < 4; i++) {
-            if(i == hintMovesStack.Peek()) {
-                DPadButton[i].GetComponent<Button>().interactable = true;
-            }else {
-                DPadButton[i].GetComponent<Button>().interactable = false;
-            }
-        }
+        LimitDPadAction(new int[]{hintMovesStack.Peek()});
     }
     
 
     public void OnClickHintNoButton() {
-        if(!(currentGameState == GameState.Pause)) return;
+        if(!(GameManager.Instance.CurrentGameState == GameState.Pause)) return;
         AudioManager.Instance.PlaySE("Decision");
-        currentGameState = GameState.Ready;
+        GameManager.Instance.CurrentGameState = GameState.Ready;
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
+    }
+
+
+
+
+
+
+
+    // 以降チュートリアル用
+
+    int opeIndex = 0;
+    static string Message1 = "まずは雪の上を移動してみよう";
+    static string Message2 = "次に氷の上を移動してみよう";
+    static string Message3 = "最後にゴールしよう";
+
+    string[] ope = {Message1, "R", "D", "U", Message2, "R", "D", Message3, "R", "U"};
+    bool flag = true;
+    public void Tutorial() {
+        Debug.Log(opeIndex);
+        switch(ope[opeIndex]) {
+            case "L":
+                LimitDPadAction(new int[]{0});
+                break;
+            case "R":
+                LimitDPadAction(new int[]{1});
+                break;
+            case "U":
+                LimitDPadAction(new int[]{2});
+                break;
+            case "D":
+                LimitDPadAction(new int[]{3});
+                break;
+            default:
+                if(!flag) return;
+                flag = false;
+                messageLayer.GetComponent<Message>().SetMessagePanel(ope[opeIndex]);
+                LimitDPadAction(new int[]{});
+                break;
+        }
+    }
+
+    public void IncrementTutorialIndex() {
+        opeIndex++;
+        flag = true;
     }
 
 }

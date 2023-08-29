@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 1200e2e3063394702b49b688c52acdbe
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - stageSelectSceneBGM: {fileID: 8300000, guid: b543c14e6b7f04f7eb2565b6728fd5e7,
+      type: 3}
+  - mainSceneBGM: {fileID: 8300000, guid: 476dc0182dc954456a7ceedaf0fbc9c2, type: 3}
+  - decisionSE: {fileID: 8300000, guid: 131a331aa57ca425fa4d457370ce2ba0, type: 3}
+  - clearSE: {fileID: 8300000, guid: 6f207a0beb11944ea934652ac5ff9253, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

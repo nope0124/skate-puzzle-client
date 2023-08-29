@@ -56,6 +56,8 @@ public class FadeManager : MonoBehaviour
     {
         float time = 0f;
         canvas.enabled = true;
+        GameManager.Instance.CurrentGameState = GameState.Fade;
+
 
         // フェードアウト
         while (time <= intervalTime)
@@ -81,5 +83,6 @@ public class FadeManager : MonoBehaviour
         }
         image.color = new Color(0.2f, 0.2f, 0.2f, 0.0f);
         canvas.enabled = false;
+        GameManager.Instance.CurrentGameState = GameState.Ready;
     }
 }

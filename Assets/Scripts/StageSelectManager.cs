@@ -97,6 +97,7 @@ public class StageSelectManager : MonoBehaviour
             // 最後に大元のレイヤーに付ける
             difficultyUI[tempDifficulty].transform.SetParent(buttonLayer.transform, false);
         }
+        Test.SetActive(false);
     }
 
     
@@ -154,6 +155,7 @@ public class StageSelectManager : MonoBehaviour
     private string baseURL = "http://localhost:3000";
     IEnumerator GetUserData()
     {
+        Test.SetActive(true);
         string url = baseURL + "/api/v1/users/1";
         UnityWebRequest request = UnityWebRequest.Get(url);
         yield return request.SendWebRequest();
@@ -177,8 +179,6 @@ public class StageSelectManager : MonoBehaviour
                 int[] progresses = data.progresses;
                 // ループでステージ生成
                 GenerateStageSelectButton(progresses);
-
-                Test.SetActive(false);
             }
         }
     }

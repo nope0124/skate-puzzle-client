@@ -2454,6 +2454,16 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a14738cfc7acf42d6a4120ccf6fbd3bc, type: 2}
   - {fileID: 11400000, guid: e74ab954c240d4d2a89a64723e245083, type: 2}
   - {fileID: 11400000, guid: f14c875381899433e9df8d87daf05236, type: 2}
+  snowBall:
+  - {fileID: 11400000, guid: 190729ac108a14743b493f77ced0d6e3, type: 2}
+  - {fileID: 11400000, guid: 78ead5ec9f4e4435da5d56b24a57e499, type: 2}
+  - {fileID: 11400000, guid: 13c6a141c7dd34f568aab041e2eefbb1, type: 2}
+  - {fileID: 11400000, guid: f15e462ee784e49cf8098373f4cfb2bd, type: 2}
+  - {fileID: 11400000, guid: 8fa7f13ad6c6d459083dd1cd3b170f86, type: 2}
+  - {fileID: 11400000, guid: 20a8c266c366544dda83b69204f57c89, type: 2}
+  - {fileID: 11400000, guid: cea4e715e40c14b0a830bed404215da0, type: 2}
+  - {fileID: 11400000, guid: 76c600108876c46ec9706fdd3eff501a, type: 2}
+  - {fileID: 11400000, guid: 8b76df15fb7594bc68b2912ab966e1be, type: 2}
   goalFloor:
   - {fileID: 11400000, guid: 8f49a23d636cd41d5b1bf4f09de8d367, type: 2}
   - {fileID: 11400000, guid: d763d1f6a253e4ab3aa875b823993a06, type: 2}
@@ -2464,6 +2474,16 @@ MonoBehaviour:
   - {fileID: 11400000, guid: be3cf17dcfbac421286ee18a043df703, type: 2}
   - {fileID: 11400000, guid: 93249bd919f894e4ab31dd3982382765, type: 2}
   - {fileID: 11400000, guid: 628d73ba92c7243a2aeb8f9270e9d98e, type: 2}
+  snowBallAnimatedTile:
+  - {fileID: 11400000, guid: c81aec92ee70844fb9b742a79a1983f6, type: 2}
+  - {fileID: 11400000, guid: 01aca64180a85483a8cac9019b622db0, type: 2}
+  - {fileID: 11400000, guid: 11f5960956954430fa24b9ccbcb384d3, type: 2}
+  - {fileID: 11400000, guid: b448201c2723c4f47bb72ce216ae1bf7, type: 2}
+  - {fileID: 11400000, guid: 4163de9c78bc74cdcb6f20d4354066df, type: 2}
+  - {fileID: 11400000, guid: 7b161c7d42aea4519b7f6b3fdf1e2e29, type: 2}
+  - {fileID: 11400000, guid: c0dfee76b3cba4d6c830563f35f8c34d, type: 2}
+  - {fileID: 11400000, guid: ee403d22412324ebb9c289c6ac21eca7, type: 2}
+  - {fileID: 11400000, guid: 3dfe7c46e35b2417787a1dd2b2eb5adf, type: 2}
   stageBoardPrefab: {fileID: 756336616931772495, guid: f5db3c08dba4045458c77f6e39f870c6,
     type: 3}
   player: {fileID: 789315990}

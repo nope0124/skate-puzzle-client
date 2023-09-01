@@ -38,7 +38,9 @@ public class MainManager : MonoBehaviour
     [SerializeField] TileBase[] iceFloor;
     [SerializeField] TileBase[] iceBlock;
     [SerializeField] TileBase[] snowFloor;
+    [SerializeField] TileBase[] snowBall;
     [SerializeField] TileBase[] goalFloor;
+    [SerializeField] TileBase[] snowBallAnimatedTile;
 
     [SerializeField] GameObject stageBoardPrefab;
     [SerializeField] GameObject player;
@@ -70,7 +72,7 @@ public class MainManager : MonoBehaviour
 
     Tilemap stageBoard;
 
-    static int currentStageId = 0;
+    static int currentStageId = 1;
     const int stageNumber = 30;
 
     int startPointXOnBoard, startPointYOnBoard, goalPointXOnBoard, goalPointYOnBoard;
@@ -90,6 +92,10 @@ public class MainManager : MonoBehaviour
     Vector3 goalPosition;
     [SerializeField] float moveSpeed = 3.0f;
     bool saveFlag = false;
+    bool snowFlag = false;
+
+    int snowX = -1;
+    int snowY = -1;
 
     Queue<int> hintMovesStack = new Queue<int>();
 
@@ -146,6 +152,9 @@ public class MainManager : MonoBehaviour
                         break;
                     case 'o':
                         SetTileBoard(x, y, snowFloor);
+                        break;
+                    case '@':
+                        SetTileBoard(x, y, snowBall);
                         break;
                     case 'S':
                         SetTileBoard(x, y, snowFloor);
@@ -402,6 +411,14 @@ public class MainManager : MonoBehaviour
         foreach(int okId in okIds) DPadButton[okId].interactable = true;
     }
 
+    private IEnumerator StopAnimation()
+    {
+        yield return new WaitForSeconds(stageBoard.animationFrameRate);
+
+        // アニメーション停止
+        SetTileBoard(snowX, snowY, iceFloor);
+    }
+
     void Update()
     {
         turnCountText.text = "TURN: " + turnCount.ToString("000");
@@ -431,6 +448,12 @@ public class MainManager : MonoBehaviour
                     GameManager.Instance.CurrentGameState = GameState.Ready;
                     playerAnim.SetFloat("MovingSpeed", 0.0f);
                     playerAnim.Play(playerAnim.GetCurrentAnimatorStateInfo(0).nameHash, 0, 0.0f);
+                    if(snowFlag) {
+                        snowFlag = false;
+                        SetTileBoard(snowX, snowY, snowBallAnimatedTile);
+                        currentStageBoardGrid[snowY][snowX] = '.';
+                        StartCoroutine(StopAnimation());
+                    }
                     return;
                 }
 
@@ -470,7 +493,13 @@ public class MainManager : MonoBehaviour
             int nx = currentPlayerXOnBoard + dx[i];
             int ny = currentPlayerYOnBoard + dy[i];
             if(nx < 0 || ny < 0 || nx >= stageBoardGridWidth || ny >= stageBoardGridHeight) break;
-            if(currentStageBoardGrid[ny][nx] == '#' || currentStageBoardGrid[ny][nx] == 'x') break;
+            if(currentStageBoardGrid[ny][nx] == 'x') break;
+            if(currentStageBoardGrid[ny][nx] == '@') {
+                snowFlag = true;
+                snowX = nx;
+                snowY = ny;
+                break;
+            }
             if(currentStageBoardGrid[ny][nx] == 'S' || currentStageBoardGrid[ny][nx] == 'G' || currentStageBoardGrid[ny][nx] == 'o') {
                 currentPlayerXOnBoard += dx[i];
                 currentPlayerYOnBoard += dy[i];

@@ -2372,7 +2372,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u5E83\u544A\u3092\u898B\u3066\u73FE\u5728\u72B6\u614B\u304B\u3089\u306E"
+  m_Text: "\u5E83\u544A\u3092\u898B\u3066\u73FE\u5728\u5730\u304B\u3089\u306E"
 --- !u!222 &798378020
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2474,16 +2474,36 @@ MonoBehaviour:
   - {fileID: 11400000, guid: be3cf17dcfbac421286ee18a043df703, type: 2}
   - {fileID: 11400000, guid: 93249bd919f894e4ab31dd3982382765, type: 2}
   - {fileID: 11400000, guid: 628d73ba92c7243a2aeb8f9270e9d98e, type: 2}
-  snowBallAnimatedTile:
-  - {fileID: 11400000, guid: c81aec92ee70844fb9b742a79a1983f6, type: 2}
-  - {fileID: 11400000, guid: 01aca64180a85483a8cac9019b622db0, type: 2}
-  - {fileID: 11400000, guid: 11f5960956954430fa24b9ccbcb384d3, type: 2}
-  - {fileID: 11400000, guid: b448201c2723c4f47bb72ce216ae1bf7, type: 2}
-  - {fileID: 11400000, guid: 4163de9c78bc74cdcb6f20d4354066df, type: 2}
-  - {fileID: 11400000, guid: 7b161c7d42aea4519b7f6b3fdf1e2e29, type: 2}
-  - {fileID: 11400000, guid: c0dfee76b3cba4d6c830563f35f8c34d, type: 2}
-  - {fileID: 11400000, guid: ee403d22412324ebb9c289c6ac21eca7, type: 2}
-  - {fileID: 11400000, guid: 3dfe7c46e35b2417787a1dd2b2eb5adf, type: 2}
+  snowBallCollapse1:
+  - {fileID: 11400000, guid: c077a1ba18da84715a9677eb4f928387, type: 2}
+  - {fileID: 11400000, guid: 748adbb0f07ff4ef68dfc9f21724b44b, type: 2}
+  - {fileID: 11400000, guid: 53c81353a5f4c4abcb23f044d322ca33, type: 2}
+  - {fileID: 11400000, guid: 32c4b95e2285d4de09da37186ec2b32c, type: 2}
+  - {fileID: 11400000, guid: dacf043d17cdd4bbe994bfd3f4dba89d, type: 2}
+  - {fileID: 11400000, guid: 12f9f417a15114f79a164ffa35a225cc, type: 2}
+  - {fileID: 11400000, guid: 4ebcd64af4e3b49c3bec4cf6ead8f467, type: 2}
+  - {fileID: 11400000, guid: b0376d0b897944060b120f87307611ec, type: 2}
+  - {fileID: 11400000, guid: 4f754a9b4bedb42d8aae0b599488d854, type: 2}
+  snowBallCollapse2:
+  - {fileID: 11400000, guid: 5cf37dbb8dcc84dd88ef4020d3d6048f, type: 2}
+  - {fileID: 11400000, guid: c02e3cfa1d820467b8f04ee96d0b84e4, type: 2}
+  - {fileID: 11400000, guid: 50514067b36dc427b8312058c8714009, type: 2}
+  - {fileID: 11400000, guid: 8853c7712bad24527b4a9d5e7d03080c, type: 2}
+  - {fileID: 11400000, guid: 415ac52cc1836474bb6fd85c2e999c86, type: 2}
+  - {fileID: 11400000, guid: b5988329a8cf543b7a93dc02d4320b09, type: 2}
+  - {fileID: 11400000, guid: f394f5bc0a45d49578e95ed23ee0e9f7, type: 2}
+  - {fileID: 11400000, guid: 7c338d9e7d7f74e9ab3eccda739a1c14, type: 2}
+  - {fileID: 11400000, guid: ef501a96ca6724c5aa2b8a48605ae317, type: 2}
+  snowBallCollapse3:
+  - {fileID: 11400000, guid: 42f35b68433094636af116e8888e0706, type: 2}
+  - {fileID: 11400000, guid: f847fbac4543d4d679b8e0f482427f23, type: 2}
+  - {fileID: 11400000, guid: 0467a07abe87840418a64c0598631328, type: 2}
+  - {fileID: 11400000, guid: 87fd39a272c36492dbd138040fdda4fa, type: 2}
+  - {fileID: 11400000, guid: 075346876153146b8835f8dd43fbfad3, type: 2}
+  - {fileID: 11400000, guid: 8a2dfc68668b64bc3bc7929081b0080a, type: 2}
+  - {fileID: 11400000, guid: 42afd336ed8d444719b115fb69fc64ed, type: 2}
+  - {fileID: 11400000, guid: 91b040ace7f0347c6b7efc759d43caea, type: 2}
+  - {fileID: 11400000, guid: 8c8bad1021726495aa1540bd4c9e1f7b, type: 2}
   stageBoardPrefab: {fileID: 756336616931772495, guid: f5db3c08dba4045458c77f6e39f870c6,
     type: 3}
   player: {fileID: 789315990}

@@ -35,12 +35,14 @@ public class MainManager : MonoBehaviour
     string[] ANIMATOR_DIR = {"ToLeft", "ToRight", "ToUp", "ToDown"};
     float EPS = 1e-5f;
 
-    [SerializeField] TileBase[] iceFloor;
+    [SerializeField] public TileBase[] iceFloor;
     [SerializeField] TileBase[] iceBlock;
     [SerializeField] TileBase[] snowFloor;
     [SerializeField] TileBase[] snowBall;
     [SerializeField] TileBase[] goalFloor;
-    [SerializeField] TileBase[] snowBallAnimatedTile;
+    [SerializeField] public TileBase[] snowBallCollapse1;
+    [SerializeField] public TileBase[] snowBallCollapse2;
+    [SerializeField] public TileBase[] snowBallCollapse3;
 
     [SerializeField] GameObject stageBoardPrefab;
     [SerializeField] GameObject player;
@@ -67,7 +69,7 @@ public class MainManager : MonoBehaviour
     [SerializeField] GameObject Test;
 
     private bool isTutorial = false;
-    
+
 
 
     Tilemap stageBoard;
@@ -115,7 +117,7 @@ public class MainManager : MonoBehaviour
         for(int i = 0; i < 4; i++) playerAnim.SetBool(ANIMATOR_DIR[i], false);
     }
 
-    void SetTileBoard(int x, int y, TileBase[] tempTile) {
+    public void SetTileBoard(int x, int y, TileBase[] tempTile) {
         Vector3Int grid = new Vector3Int(x, y, 0);
         if(x == 0 && y == 0) { // 左下
             stageBoard.SetTile(grid, tempTile[6]);
@@ -136,6 +138,26 @@ public class MainManager : MonoBehaviour
         }else { // 中
             stageBoard.SetTile(grid, tempTile[4]);
         }
+    }
+
+    public void SetTileBoardFrom(int x, int y, string tmp) {
+        switch(tmp) {
+            case "SnowBallCollapse1":
+                SetTileBoard(x, y, snowBallCollapse1);
+                break;
+            case "SnowBallCollapse2":
+                SetTileBoard(x, y, snowBallCollapse2);
+                break;
+            case "SnowBallCollapse3":
+                SetTileBoard(x, y, snowBallCollapse3);
+                break;
+            case "IceFloor":
+                SetTileBoard(x, y, iceFloor);
+                break;
+            default:
+                break;
+        }
+
     }
 
 
@@ -411,13 +433,6 @@ public class MainManager : MonoBehaviour
         foreach(int okId in okIds) DPadButton[okId].interactable = true;
     }
 
-    private IEnumerator StopAnimation()
-    {
-        yield return new WaitForSeconds(stageBoard.animationFrameRate);
-
-        // アニメーション停止
-        SetTileBoard(snowX, snowY, iceFloor);
-    }
 
     void Update()
     {
@@ -450,9 +465,17 @@ public class MainManager : MonoBehaviour
                     playerAnim.Play(playerAnim.GetCurrentAnimatorStateInfo(0).nameHash, 0, 0.0f);
                     if(snowFlag) {
                         snowFlag = false;
-                        SetTileBoard(snowX, snowY, snowBallAnimatedTile);
+                        GameObject tileGameObject = new GameObject("TileManager");
+                        tileGameObject.AddComponent<TileManager>();
+                        TileManager tileManager = tileGameObject.GetComponent<TileManager>();
+                        tileManager.X = snowX;
+                        tileManager.Y = snowY;
+                        tileManager.snowBallCollapse1 = snowBallCollapse1;
+                        tileManager.snowBallCollapse2 = snowBallCollapse2;
+                        tileManager.snowBallCollapse3 = snowBallCollapse3;
+                        tileManager.iceFloor = iceFloor;
+
                         currentStageBoardGrid[snowY][snowX] = '.';
-                        StartCoroutine(StopAnimation());
                     }
                     return;
                 }

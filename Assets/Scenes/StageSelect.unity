@@ -254,7 +254,7 @@ MonoBehaviour:
   selectLightSprite: {fileID: 21300000, guid: 31d7aeb31704a404081959bb350f8c19, type: 3}
   notSelectLightSprite: {fileID: 21300000, guid: 872990329075f43a188a44ed448a8f0d,
     type: 3}
-  Test: {fileID: 1318723585}
+  loading: {fileID: 1318723585}
 --- !u!1 &215379920
 GameObject:
   m_ObjectHideFlags: 0
@@ -290,7 +290,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 3.8749747, y: 0}
-  m_SizeDelta: {x: 2078.9404, y: 960}
+  m_SizeDelta: {x: 2078.9404, y: 2000}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &215379922
 MonoBehaviour:
@@ -305,7 +305,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.392}
+  m_Color: {r: 0, g: 0, b: 1, a: 0.392}
   m_RaycastTarget: 1
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -1410,7 +1410,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1318723586}
   m_Layer: 0
-  m_Name: Test
+  m_Name: LoadingLayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -49,10 +49,10 @@ public class StageSelectManager : MonoBehaviour
     static bool fadeOutFlagToMain = false;
 
 
-    [SerializeField] GameObject Test;
+    [SerializeField] GameObject loading;
 
     // ステージボタンの生成
-    void GenerateStageSelectButton(int[] progresses) {
+    void GenerateStageSelectButton() {
         int stageId = 0;
         for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
             for(int y = 0; y < stageSelectHeightNumber; y++) {
@@ -60,8 +60,7 @@ public class StageSelectManager : MonoBehaviour
 
                     // ステージID、ステージ名、スコアを定義
                     string stageName = "StageScore" + stageId.ToString();
-                    // int stageScore = PlayerPrefs.GetInt(stageName, 0);
-                    int stageScore = progresses[stageId];
+                    int stageScore = PlayerPrefs.GetInt(stageName, -1);
 
                     // positionを定めてステージを生成、難易度別の親に付ける
                     float stageClonePositionX = stageSelectWidthCenter+stageSelectWidth/(stageSelectWidthNumber-1)*x-stageSelectWidth/2.0f;
@@ -87,7 +86,7 @@ public class StageSelectManager : MonoBehaviour
                     }
 
                     // 初心者用ステージの調整
-                    if(stageName == "StageScore0_0") stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(true);
+                    if(stageName == "StageScore0") stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(true);
                     else stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(false);
 
                     // stageIdをインクリメント
@@ -97,7 +96,7 @@ public class StageSelectManager : MonoBehaviour
             // 最後に大元のレイヤーに付ける
             difficultyUI[tempDifficulty].transform.SetParent(buttonLayer.transform, false);
         }
-        Test.SetActive(false);
+        loading.SetActive(false);
     }
 
     
@@ -131,7 +130,7 @@ public class StageSelectManager : MonoBehaviour
     void Start()
     {
         // バナー広告呼び出し
-        AdmobManager.Instance.RequestDefaultBanner("Bottom");
+        // AdmobManager.Instance.RequestDefaultBanner("Bottom");
 
         // BGMの設定
         AudioManager.Instance.SetBGMAudioClip(bgmAudioClip);
@@ -147,41 +146,10 @@ public class StageSelectManager : MonoBehaviour
         DisplayStageSelectByDifficulty();
 
         // // ループでステージ生成
-        // GenerateStageSelectButton();
-
-        StartCoroutine(GetUserData());
+        GenerateStageSelectButton();
     }
 
     private string baseURL = "http://localhost:3000";
-    IEnumerator GetUserData()
-    {
-        Test.SetActive(true);
-        string url = baseURL + "/api/v1/users/1";
-        UnityWebRequest request = UnityWebRequest.Get(url);
-        yield return request.SendWebRequest();
-
-        if (request.isNetworkError)
-        {
-            Debug.Log(request.error);
-        }
-        else
-        {
-            if(request.responseCode == 200)
-            {
-                // JSONデータをC#オブジェクトにデシリアライズ
-                GetUserStageProgressResponse data = JsonUtility.FromJson<GetUserStageProgressResponse>(request.downloadHandler.text);
-
-                // データの表示
-                foreach (int progress in data.progresses)
-                {
-                    Debug.Log(progress);
-                }
-                int[] progresses = data.progresses;
-                // ループでステージ生成
-                GenerateStageSelectButton(progresses);
-            }
-        }
-    }
 
     /// <summary>
     /// 難易度ボタン
@@ -207,7 +175,7 @@ public class StageSelectManager : MonoBehaviour
     public void OnClickHomeButton() {
         AudioManager.Instance.PlaySE("Decision");
         FadeManager.Instance.LoadScene(0.5f, "Start");
-        AdmobManager.Instance.DestroyDefaultBanner();
+        // AdmobManager.Instance.DestroyDefaultBanner();
     }
 
 }

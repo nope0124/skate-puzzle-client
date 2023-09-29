@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Solver : MonoBehaviour
+public class Solver
 {
     int[] dx = {-1, 1, 0, 0};
     int[] dy = {0, 0, 1, -1};

@@ -66,7 +66,7 @@ public class MainManager : MonoBehaviour
     [SerializeField] Button[] clearScore;
 
 
-    [SerializeField] GameObject Test;
+    [SerializeField] GameObject loading;
 
     private bool isTutorial = false;
 
@@ -74,7 +74,7 @@ public class MainManager : MonoBehaviour
 
     Tilemap stageBoard;
 
-    static int currentStageId = 1;
+    static int currentStageId = 0;
     const int stageNumber = 30;
 
     int startPointXOnBoard, startPointYOnBoard, goalPointXOnBoard, goalPointYOnBoard;
@@ -200,7 +200,6 @@ public class MainManager : MonoBehaviour
     }
 
     void GetBoardScale(int width, int height, string[] board) {
-        // stageBoardGrid = new Board().GetBoard(currentDifficulty, currentStageId);
         stageBoardGrid = new char[height][];
         for(int i = 0; i < height; i++) stageBoardGrid[i] = new char[width];
         for(int y = 0; y < height; y++) {
@@ -221,7 +220,7 @@ public class MainManager : MonoBehaviour
 
     IEnumerator GetStageData(int stage_id)
     {
-        Test.SetActive(true);
+        loading.SetActive(true);
         string url = baseURL + "/api/v1/stages/" + (stage_id + 1).ToString();
         Debug.Log(url);
         UnityWebRequest request = UnityWebRequest.Get(url);
@@ -238,9 +237,6 @@ public class MainManager : MonoBehaviour
                 // JSONデータをC#オブジェクトにデシリアライズ
                 GetStageBoardResponse data = JsonUtility.FromJson<GetStageBoardResponse>(request.downloadHandler.text);
 
-                Debug.Log(data.width);
-                Debug.Log(data.height);
-                Debug.Log(data.board);
                 GetBoardScale(data.width, data.height, data.board);
                 // 盤面の状態を反映
                 SetTiles();
@@ -252,7 +248,7 @@ public class MainManager : MonoBehaviour
                 targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
                 goalPosition = new Vector3(goalPointX+stageBoardWidth/2.0f, goalPointY+stageBoardHeight/2.0f, 0.0f);
 
-                // 盤面の状態をコピー // ディープコピーの方法がわからない
+                // 盤面の状態をコピー
                 currentStageBoardGrid = new char[stageBoardGridHeight][];
                 for(int i = 0; i < stageBoardGridHeight; i++) currentStageBoardGrid[i] = new char[stageBoardGridWidth];
                 for(int i = 0; i < stageBoardGridHeight; i++) {
@@ -261,55 +257,7 @@ public class MainManager : MonoBehaviour
                     }
                 }
 
-                Test.SetActive(false);
-            }
-        }
-    }
-
-
-    IEnumerator PostStageData(int stage_id)
-    {
-        Test.SetActive(true);
-        string url = baseURL + "/api/v1/stages/" + (stage_id + 1).ToString();
-        Debug.Log(url);
-        UnityWebRequest request = UnityWebRequest.Get(url);
-        yield return request.SendWebRequest();
-
-        if (request.isNetworkError)
-        {
-            Debug.Log(request.error);
-        }
-        else
-        {
-            if(request.responseCode == 200)
-            {
-                // JSONデータをC#オブジェクトにデシリアライズ
-                GetStageBoardResponse data = JsonUtility.FromJson<GetStageBoardResponse>(request.downloadHandler.text);
-
-                Debug.Log(data.width);
-                Debug.Log(data.height);
-                Debug.Log(data.board);
-                GetBoardScale(data.width, data.height, data.board);
-                // 盤面の状態を反映
-                SetTiles();
-                // プレイヤー位置の初期化
-                player.transform.position = new Vector3(startPointX+stageBoardWidth/2.0f, startPointY+stageBoardHeight/2.0f, 0.0f);
-                currentPlayerX = startPointX; currentPlayerXOnBoard = startPointXOnBoard;
-                currentPlayerY = startPointY; currentPlayerYOnBoard = startPointYOnBoard;
-                player.transform.localScale = new Vector3(stageBoardWidth, stageBoardHeight, 1.0f);
-                targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
-                goalPosition = new Vector3(goalPointX+stageBoardWidth/2.0f, goalPointY+stageBoardHeight/2.0f, 0.0f);
-
-                // 盤面の状態をコピー // ディープコピーの方法がわからない
-                currentStageBoardGrid = new char[stageBoardGridHeight][];
-                for(int i = 0; i < stageBoardGridHeight; i++) currentStageBoardGrid[i] = new char[stageBoardGridWidth];
-                for(int i = 0; i < stageBoardGridHeight; i++) {
-                    for(int j = 0; j < stageBoardGridWidth; j++) {
-                        currentStageBoardGrid[i][j] = stageBoardGrid[i][j];
-                    }
-                }
-
-                Test.SetActive(false);
+                loading.SetActive(false);
             }
         }
     }
@@ -363,49 +311,22 @@ public class MainManager : MonoBehaviour
         string stageNameUnlock = "StageScore" + ((currentStageId + 1) % stageNumber).ToString();
         int tempScore = PlayerPrefs.GetInt(stageName, 0);
         int distance = new Solver().GetOptMoves(stageBoardGrid);
-        string userId = PlayerPrefs.GetString("user_id");
-        if(userId == "") {
-            if(turnCount <= distance || isTutorial) {
-                AudioManager.Instance.PlaySE("Clear");
-                clearScore[0].interactable = true;
-                clearScore[1].interactable = true;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
-            }else if(turnCount <= distance*2) {
-                clearScore[0].interactable = true;
-                clearScore[1].interactable = false;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
-            }else {
-                clearScore[0].interactable = false;
-                clearScore[1].interactable = false;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
-            }
+        if(turnCount <= distance || isTutorial) {
+            AudioManager.Instance.PlaySE("Clear");
+            clearScore[0].interactable = true;
+            clearScore[1].interactable = true;
+            PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
+        }else if(turnCount <= distance*2) {
+            clearScore[0].interactable = true;
+            clearScore[1].interactable = false;
+            PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
         }else {
-            FirebaseDatabase.GetInstance(Const.CO.DATABASE_URL); // データベースのURLを設定
-            DatabaseReference databaseRoot = FirebaseDatabase.DefaultInstance.RootReference; // ルートを作成
-            DatabaseReference scoreReference = databaseRoot.Child("users").Child(userId).Child("scores");
-            Dictionary<string, object> childUpdates = new Dictionary<string, object>();
-            difficultyName = new string[]{"easy", "normal", "hard"};
-            if(turnCount <= distance || isTutorial) {
-                AudioManager.Instance.PlaySE("Clear");
-                clearScore[0].interactable = true;
-                clearScore[1].interactable = true;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
-            }else if(turnCount <= distance*2) {
-                clearScore[0].interactable = true;
-                clearScore[1].interactable = false;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
-            }else {
-                clearScore[0].interactable = false;
-                clearScore[1].interactable = false;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
-            }
-            // childUpdates["/"+difficultyName[currentDifficulty]+"/"+currentStageId.ToString()] = PlayerPrefs.GetInt(stageName);
-            // if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) {
-            //     PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(0, PlayerPrefs.GetInt(stageNameUnlock)));
-            //     childUpdates["/"+difficultyName[(currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber]+"/"+((currentStageId+1) % stageNumber).ToString()] = PlayerPrefs.GetInt(stageNameUnlock);
-            // }
-            // scoreReference.UpdateChildrenAsync(childUpdates);
+            clearScore[0].interactable = false;
+            clearScore[1].interactable = false;
+            PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
         }
+        tempScore = PlayerPrefs.GetInt(stageNameUnlock, 0);
+        PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(tempScore, 0));
     }
 
     void Start()
@@ -416,8 +337,8 @@ public class MainManager : MonoBehaviour
         // userId = PlayerPrefs.GetString("user_id");
         // FirebaseApp.DefaultInstance.SetEditorDatabaseUrl(Const.CO.DATABASE_URL); // データベースのURLを設定
         // DatabaseReference scoreReference = FirebaseDatabase.DefaultInstance.RootReference.Child("users").Child(userId).Child("scores");
-        AdmobManager.Instance.RequestDefaultBanner("Top");
-        AdmobManager.Instance.RequestDefaultInterstitial();
+        // AdmobManager.Instance.RequestDefaultBanner("Top");
+        // AdmobManager.Instance.RequestDefaultInterstitial();
         // 盤面のサイズを取得
         // 盤面のサイズを調整
         // 盤面の状態をコピー
@@ -441,7 +362,9 @@ public class MainManager : MonoBehaviour
             case GameState.Ready:
                 if(isTutorial) {
                     Tutorial();
-                }else { // チュートリアル以外では制限なし
+                }else if(hintMovesStack.Count > 0) {
+                    LimitDPadAction(new int[]{hintMovesStack.Peek()});
+                }else {
                     LimitDPadAction(new int[]{0, 1, 2, 3});
                 }
                 break;
@@ -581,7 +504,7 @@ public class MainManager : MonoBehaviour
         if(!(GameManager.Instance.CurrentGameState == GameState.Pause || GameManager.Instance.CurrentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
         Time.timeScale = 1.0f;
-        AdmobManager.Instance.DestroyDefaultBanner();
+        // AdmobManager.Instance.DestroyDefaultBanner();
         FadeManager.Instance.LoadScene(0.5f, "StageSelect");
     }
 
@@ -630,7 +553,7 @@ public class MainManager : MonoBehaviour
         GameManager.Instance.CurrentGameState = GameState.Ready;
         hintPanel.SetActive(false);
         Time.timeScale = 1.0f;
-        AdmobManager.Instance.ShowDefaultInterstitial();
+        // AdmobManager.Instance.ShowDefaultInterstitial();
         
         Stack<int> HINT = new Solver().Solve(currentStageBoardGrid, currentPlayerXOnBoard, currentPlayerYOnBoard);
         hintMovesStack.Clear();
@@ -654,20 +577,16 @@ public class MainManager : MonoBehaviour
 
 
 
-
-
-
     // 以降チュートリアル用
 
     int opeIndex = 0;
-    static string Message1 = "まずは雪の上を移動してみよう";
-    static string Message2 = "次に氷の上を移動してみよう";
-    static string Message3 = "最後にゴールしよう";
+    static string message1 = "チュートリアルを始めます<>まずは雪原(白いマス)を\n移動してみましょう";
+    static string message2 = "このように雪原は\n普通に歩くことができます<>次に氷の上(水色のマス)\nを移動してみましょう";
+    static string message3 = "氷の上は滑ってしまい\n壁にぶつかるまで止まりません<>上手く操作してペンギンを\nゴール☆まで導いてください！";
 
-    string[] ope = {Message1, "R", "D", "U", Message2, "R", "D", Message3, "R", "U"};
-    bool flag = true;
+    string[] ope = {message1, "R", "D", "U", message2, "R", "D", message3, "R", "U"};
+    bool incrementFlag = true;
     public void Tutorial() {
-        Debug.Log(opeIndex);
         switch(ope[opeIndex]) {
             case "L":
                 LimitDPadAction(new int[]{0});
@@ -682,8 +601,8 @@ public class MainManager : MonoBehaviour
                 LimitDPadAction(new int[]{3});
                 break;
             default:
-                if(!flag) return;
-                flag = false;
+                if(!incrementFlag) return;
+                incrementFlag = false;
                 messageLayer.GetComponent<Message>().SetMessagePanel(ope[opeIndex]);
                 LimitDPadAction(new int[]{});
                 break;
@@ -692,7 +611,7 @@ public class MainManager : MonoBehaviour
 
     public void IncrementTutorialIndex() {
         opeIndex++;
-        flag = true;
+        incrementFlag = true;
     }
 
 }

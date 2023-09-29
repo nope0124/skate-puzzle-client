@@ -16,8 +16,6 @@ using Firebase.Database;
 
 public class StartManager : MonoBehaviour
 {
-    float EPS = 1e-5f;
-
     static int difficultyNumber = 2;
     static int stageNumber = 15;
 
@@ -25,7 +23,7 @@ public class StartManager : MonoBehaviour
     [SerializeField] Text idButtonText;
     [SerializeField] GameObject dataResetPanel;
     [SerializeField] GameObject dataResetFinishPanel;
-    [SerializeField] GameObject Test;
+    [SerializeField] GameObject loading;
 
     [Serializable]
     class UserSaveData : ISerializationCallbackReceiver
@@ -91,6 +89,7 @@ public class StartManager : MonoBehaviour
 
     IEnumerator GetData()
     {
+        loading.SetActive(true);
         string url = baseURL + "/stages/1";
         UnityWebRequest request = UnityWebRequest.Get(url);
         Debug.Log("呼び出し中");
@@ -105,7 +104,7 @@ public class StartManager : MonoBehaviour
             if(request.responseCode == 200)
             {
                 Debug.Log("OK");
-                Test.SetActive(false);
+                loading.SetActive(false);
             }
         }
     }
@@ -140,7 +139,7 @@ public class StartManager : MonoBehaviour
     void Start()
     {
         // バナー広告呼び出し
-        AdmobManager.Instance.RequestDefaultBanner("Bottom");
+        // AdmobManager.Instance.RequestDefaultBanner("Bottom");
 
         // BGMの設定
         AudioManager.Instance.SetBGMAudioClip(null);
@@ -188,7 +187,7 @@ public class StartManager : MonoBehaviour
     public void OnClickStartButton()
     {
         AudioManager.Instance.PlaySE("Decision");
-        AdmobManager.Instance.DestroyDefaultBanner();
+        // AdmobManager.Instance.DestroyDefaultBanner();
         FadeManager.Instance.LoadScene(0.5f, "StageSelect");
     }
 
@@ -208,13 +207,15 @@ public class StartManager : MonoBehaviour
     /// </summary>
     public void OnClickDataResetYesButton() {
         AudioManager.Instance.PlaySE("Decision");
+        int stageId = 0;
         for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
             for(int tempStageId = 0; tempStageId < stageNumber; tempStageId++) {
-                string stageName = "StageScore" + tempDifficulty.ToString() + "_" + tempStageId.ToString();
+                string stageName = "StageScore" + stageId.ToString();
                 PlayerPrefs.SetInt(stageName, -1);
+                stageId++;
             }
         }
-        PlayerPrefs.SetInt("StageScore0_0", 0);
+        PlayerPrefs.SetInt("StageScore0", 0);
         dataResetPanel.SetActive(false);
         dataResetFinishPanel.SetActive(true);
 

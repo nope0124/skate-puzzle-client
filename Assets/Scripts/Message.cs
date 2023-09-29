@@ -6,9 +6,9 @@ using System.Text.RegularExpressions;
 
 public class Message : MonoBehaviour {
 
-    //　メッセージUI
+    // メッセージUI
     private Text messageText;
-    //　表示するメッセージ
+    // 表示するメッセージ
     [SerializeField]
     [TextArea(1, 20)]
     private string allMessage = "右ボタンを押してください";
@@ -16,31 +16,31 @@ public class Message : MonoBehaviour {
     [SerializeField]
     private string splitString = "<>";
 
-    //　分割したメッセージ
+    // 分割したメッセージ
     private string[] splitMessage;
 
-    //　分割したメッセージの何番目か
+    // 分割したメッセージの何番目か
     private int messageNum;
 
-    //　テキストスピード
+    // テキストスピード
     [SerializeField]
     private float textSpeed = 0.05f;
 
-    //　経過時間
+    // 経過時間
     private float elapsedTime = 0f;
 
-    //　今見ている文字番号
+    // 今見ている文字番号
     private int nowTextNum = 0;
 
-    //　マウスクリックを促すアイコン
+    // マウスクリックを促すアイコン
     private Text clickIcon;
     
-    //　クリックアイコンの点滅秒数
+    // クリックアイコンの点滅秒数
     [SerializeField]
     private float clickFlashTime = 0.2f;
-    //　1回分のメッセージを表示したかどうか
+    // 1回分のメッセージを表示したかどうか
     private bool isOneMessage = false;
-    //　メッセージをすべて表示したかどうか
+    // メッセージをすべて表示したかどうか
     private bool isEndMessage = false;
 
     void Start() {
@@ -52,7 +52,7 @@ public class Message : MonoBehaviour {
     }
 
     void Update() {
-        //　メッセージが終わっているか、メッセージがない場合はこれ以降何もしない
+        // メッセージが終わっているか、メッセージがない場合はこれ以降何もしない
         if (isEndMessage) {
             return;
         }else if(allMessage == null || allMessage == "") {
@@ -62,40 +62,40 @@ public class Message : MonoBehaviour {
             return;
         }
 
-        //　1回に表示するメッセージを表示していない	
+        // 1回に表示するメッセージを表示していない	
         if (!isOneMessage) {
-            //　テキスト表示時間を経過したらメッセージを追加
+            // テキスト表示時間を経過したらメッセージを追加
             if (elapsedTime >= textSpeed) {
                 messageText.text += splitMessage[messageNum][nowTextNum];
 
                 nowTextNum++;
                 elapsedTime = 0f;
 
-                //　メッセージを全部表示、または行数が最大数表示された
+                // メッセージを全部表示、または行数が最大数表示された
                 if (nowTextNum >= splitMessage[messageNum].Length) {
                     isOneMessage = true;
                 }
             }
             elapsedTime += Time.deltaTime;
 
-            //　メッセージ表示中にマウスの左ボタンを押したら一括表示
+            // メッセージ表示中にマウスの左ボタンを押したら一括表示
             if (Input.GetMouseButtonDown(0)) {
                 //　ここまでに表示しているテキストに残りのメッセージを足す
                 messageText.text += splitMessage[messageNum].Substring(nowTextNum);
                 isOneMessage = true;
             }
-        //　1回に表示するメッセージを表示した
+        // 1回に表示するメッセージを表示した
         } else {
 
             elapsedTime += Time.deltaTime;
 
-            //　クリックアイコンを点滅する時間を超えた時、反転させる
+            // クリックアイコンを点滅する時間を超えた時、反転させる
             if (elapsedTime >= clickFlashTime) {
                 clickIcon.enabled = !clickIcon.enabled;
                 elapsedTime = 0f;
             }
 
-            //　マウスクリックされたら次の文字表示処理
+            // マウスクリックされたら次の文字表示処理
             if (Input.GetMouseButtonDown(0)) {
                 nowTextNum = 0;
                 messageNum++;
@@ -104,7 +104,7 @@ public class Message : MonoBehaviour {
                 elapsedTime = 0f;
                 isOneMessage = false;
 
-                //　メッセージが全部表示されていたらゲームオブジェクト自体の削除
+                // メッセージが全部表示されていたらゲームオブジェクト自体の削除
                 if (messageNum >= splitMessage.Length) {
                     isEndMessage = true;
                     transform.GetChild(0).gameObject.SetActive(false);
@@ -114,10 +114,10 @@ public class Message : MonoBehaviour {
         }
     }
 
-    //　新しいメッセージを設定
+    // 新しいメッセージを設定
     void SetMessage(string message) {
         this.allMessage = message;
-        //　分割文字列で一回に表示するメッセージを分割する
+        // 分割文字列で一回に表示するメッセージを分割する
         splitMessage = Regex.Split(allMessage, @"\s*" + splitString + @"\s*", RegexOptions.IgnorePatternWhitespace);
         nowTextNum = 0;
         messageNum = 0;
@@ -126,7 +126,7 @@ public class Message : MonoBehaviour {
         isEndMessage = false;
     }
 
-    //　他のスクリプトから新しいメッセージを設定しUIをアクティブにする
+    // 他のスクリプトから新しいメッセージを設定しUIをアクティブにする
     public void SetMessagePanel(string message) {
         SetMessage(message);
         transform.GetChild(0).gameObject.SetActive(true);

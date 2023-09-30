@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// BGM、SEを扱うクラス
+/// </summary>
 public class AudioManager : MonoBehaviour
 {
     static bool bgmStatus = true;

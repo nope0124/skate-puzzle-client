@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
+/// <summary>
+/// 雪玉限定、壊れるアニメーション遷移の実装クラス
+/// </summary>
 public class TileManager : MonoBehaviour
 {
 

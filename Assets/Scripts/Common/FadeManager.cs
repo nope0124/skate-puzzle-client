@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/// <summary>
+/// フェードイン、アウトを含んだシーン遷移を扱うクラス
+/// </summary>
 public class FadeManager : MonoBehaviour
 {
     private static Canvas canvas;

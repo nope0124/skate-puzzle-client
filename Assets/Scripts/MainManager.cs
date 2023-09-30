@@ -8,6 +8,9 @@ using UnityEngine.SceneManagement;
 using Firebase;
 using Firebase.Database;
 
+/// <summary>
+/// インゲーム画面を扱うクラス
+/// </summary>
 public class MainManager : MonoBehaviour
 {
     private static MainManager singleton;
@@ -65,12 +68,9 @@ public class MainManager : MonoBehaviour
 
     [SerializeField] Button[] clearScore;
 
-
     [SerializeField] GameObject loading;
 
     private bool isTutorial = false;
-
-
 
     Tilemap stageBoard;
 
@@ -86,24 +86,17 @@ public class MainManager : MonoBehaviour
     float stageBoardWidth, stageBoardHeight;
     float screenScale = 4.5f;
     char[][] stageBoardGrid, currentStageBoardGrid;
-
     // 基本的に長さは同じ
     int stageBoardGridWidth, stageBoardGridHeight;
-
     Vector3 targetPosition;
     Vector3 goalPosition;
     [SerializeField] float moveSpeed = 3.0f;
     bool saveFlag = false;
     bool snowFlag = false;
-
     int snowX = -1;
     int snowY = -1;
-
     Queue<int> hintMovesStack = new Queue<int>();
-
     int turnCount = 0;
-    // string userId = "";
-    // DatabaseReference scoreReference;
     string[] difficultyName;
 
     public int CurrentStageId
@@ -113,10 +106,13 @@ public class MainManager : MonoBehaviour
     }
 
 
-    void AnimatorReset() {
+    private void AnimatorReset() {
         for(int i = 0; i < 4; i++) playerAnim.SetBool(ANIMATOR_DIR[i], false);
     }
 
+    /// <summary>
+    /// 盤面にタイルを設置
+    /// </summary>
     public void SetTileBoard(int x, int y, TileBase[] tempTile) {
         Vector3Int grid = new Vector3Int(x, y, 0);
         if(x == 0 && y == 0) { // 左下
@@ -140,6 +136,9 @@ public class MainManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 雪玉限定の処理
+    /// </summary>
     public void SetTileBoardFrom(int x, int y, string tmp) {
         switch(tmp) {
             case "SnowBallCollapse1":
@@ -161,7 +160,10 @@ public class MainManager : MonoBehaviour
     }
 
 
-    void SetTiles() {
+    /// <summary>
+    /// 盤面を全探索、状態に応じてタイルを設置する
+    /// </summary>
+    private void SetTiles() {
         for(int y = 0; y < stageBoardGridHeight; y++) {
             for(int x = 0; x < stageBoardGridWidth; x++) {
                 Vector3Int grid = new Vector3Int(x, y, 0);
@@ -199,7 +201,10 @@ public class MainManager : MonoBehaviour
         }
     }
 
-    void GetBoardScale(int width, int height, string[] board) {
+    /// <summary>
+    /// 盤面の大きさを取得して調整
+    /// </summary>
+    private void GetBoardScale(int width, int height, string[] board) {
         stageBoardGrid = new char[height][];
         for(int i = 0; i < height; i++) stageBoardGrid[i] = new char[width];
         for(int y = 0; y < height; y++) {
@@ -207,8 +212,12 @@ public class MainManager : MonoBehaviour
                 stageBoardGrid[y][x] = board[y][x];
             }
         }
+
+        // マス目の数
         stageBoardGridWidth = stageBoardGrid[0].Length;
         stageBoardGridHeight = stageBoardGrid.Length;
+
+        // マス目一つの縦横サイズ
         stageBoardWidth = screenScale/stageBoardGridWidth;
         stageBoardHeight = screenScale/stageBoardGridHeight;
 
@@ -218,6 +227,9 @@ public class MainManager : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// ステージAPIから盤面情報を取得
+    /// </summary>
     IEnumerator GetStageData(int stage_id)
     {
         loading.SetActive(true);
@@ -263,7 +275,7 @@ public class MainManager : MonoBehaviour
     }
 
     
-    void Init() {
+    private void Init() {
         if (currentStageId == 0) {
             isTutorial = true;
         }else {
@@ -277,10 +289,6 @@ public class MainManager : MonoBehaviour
 
         stageIdText.text = "STAGE: " + (currentStageId).ToString("000");
         turnCount = 0;
-
-        // for(int i = 0; i < 3; i++) {
-        //     clearScore[i].SetActive(false);
-        // }
 
         ButtonHintReset();
 
@@ -306,21 +314,29 @@ public class MainManager : MonoBehaviour
     }
 
 
-    void saveData() {
+    /// <summary>
+    /// データをPlayerPrefsに保存
+    /// </summary>
+    private void saveData() {
         string stageName = "StageScore" + currentStageId.ToString();
         string stageNameUnlock = "StageScore" + ((currentStageId + 1) % stageNumber).ToString();
         int tempScore = PlayerPrefs.GetInt(stageName, 0);
+
+        // ソルバーから最短距離を取得
         int distance = new Solver().GetOptMoves(stageBoardGrid);
         if(turnCount <= distance || isTutorial) {
+            // 星3
             AudioManager.Instance.PlaySE("Clear");
             clearScore[0].interactable = true;
             clearScore[1].interactable = true;
             PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
         }else if(turnCount <= distance*2) {
+            // 星2
             clearScore[0].interactable = true;
             clearScore[1].interactable = false;
             PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
         }else {
+            // 星1
             clearScore[0].interactable = false;
             clearScore[1].interactable = false;
             PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
@@ -334,8 +350,6 @@ public class MainManager : MonoBehaviour
         if (currentStageId == 0) {
             isTutorial = true;
         }
-        // userId = PlayerPrefs.GetString("user_id");
-        // FirebaseApp.DefaultInstance.SetEditorDatabaseUrl(Const.CO.DATABASE_URL); // データベースのURLを設定
         // DatabaseReference scoreReference = FirebaseDatabase.DefaultInstance.RootReference.Child("users").Child(userId).Child("scores");
         // AdmobManager.Instance.RequestDefaultBanner("Top");
         // AdmobManager.Instance.RequestDefaultInterstitial();
@@ -348,6 +362,9 @@ public class MainManager : MonoBehaviour
     }
     
 
+    /// <summary>
+    /// 移動方向の制限をつける、okIdsに入っている方向だけ許可
+    /// </summary>
     public void LimitDPadAction(int[] okIds) {
         for(int i = 0; i < 4; i++) DPadButton[i].interactable = false;
         if(okIds.Length == 0) return;
@@ -359,6 +376,7 @@ public class MainManager : MonoBehaviour
     {
         turnCountText.text = "TURN: " + turnCount.ToString("000");
         switch (GameManager.Instance.CurrentGameState) {
+            // プレイヤーが止まっている状態
             case GameState.Ready:
                 if(isTutorial) {
                     Tutorial();
@@ -368,9 +386,12 @@ public class MainManager : MonoBehaviour
                     LimitDPadAction(new int[]{0, 1, 2, 3});
                 }
                 break;
+
+            // ポーズボタンなどが押されている状態
             case GameState.Pause:
                 break;
 
+            // プレイヤーが進んでいる状態
             case GameState.Playing:
                 // ボタンを押せないように
                 LimitDPadAction(new int[]{});
@@ -386,6 +407,7 @@ public class MainManager : MonoBehaviour
                     GameManager.Instance.CurrentGameState = GameState.Ready;
                     playerAnim.SetFloat("MovingSpeed", 0.0f);
                     playerAnim.Play(playerAnim.GetCurrentAnimatorStateInfo(0).nameHash, 0, 0.0f);
+                    // 雪玉限定の処理
                     if(snowFlag) {
                         snowFlag = false;
                         GameObject tileGameObject = new GameObject("TileManager");
@@ -397,7 +419,6 @@ public class MainManager : MonoBehaviour
                         tileManager.snowBallCollapse2 = snowBallCollapse2;
                         tileManager.snowBallCollapse3 = snowBallCollapse3;
                         tileManager.iceFloor = iceFloor;
-
                         currentStageBoardGrid[snowY][snowX] = '.';
                     }
                     return;
@@ -412,6 +433,7 @@ public class MainManager : MonoBehaviour
 
                 break;
 
+            // クリア状態
             case GameState.Clear:
                 playerAnim.SetFloat("MovingSpeed", 0.0f); // 止める
                 AnimatorReset(); // 一回だけ
@@ -432,6 +454,9 @@ public class MainManager : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// プレイヤーを移動させる
+    /// </summary>
     private void MovePlayer(int i)  {
 
         // 次の到着場所を事前に計算
@@ -462,10 +487,15 @@ public class MainManager : MonoBehaviour
         targetPosition = new Vector3(currentPlayerX+stageBoardWidth/2.0f, currentPlayerY+stageBoardHeight/2.0f, 0.0f);
     }
 
+    /// <summary>
+    /// プレイヤー移動ボタン
+    /// </summary>
     public void OnClickMoveButton(int i) {
         if(!(GameManager.Instance.CurrentGameState == GameState.Ready)) return;
         if(isTutorial) opeIndex++;
         GameManager.Instance.CurrentGameState = GameState.Playing;
+
+        // ヒント状態の時は移動を制限
         if(hintMovesStack.Count > 0) {
             if(i == hintMovesStack.Peek()) {
                 MovePlayer(i);
@@ -492,6 +522,9 @@ public class MainManager : MonoBehaviour
         
     }
 
+    /// <summary>
+    /// ポーズボタン
+    /// </summary>
     public void OnClickPauseButton() {
         if(!(GameManager.Instance.CurrentGameState == GameState.Ready)) return;
         AudioManager.Instance.PlaySE("Decision");
@@ -500,6 +533,9 @@ public class MainManager : MonoBehaviour
         Time.timeScale = 0.0f;
     }
 
+    /// <summary>
+    /// ステージセレクト画面遷移ボタン
+    /// </summary>
     public void OnClickBackButton() {
         if(!(GameManager.Instance.CurrentGameState == GameState.Pause || GameManager.Instance.CurrentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
@@ -508,6 +544,9 @@ public class MainManager : MonoBehaviour
         FadeManager.Instance.LoadScene(0.5f, "StageSelect");
     }
 
+    /// <summary>
+    /// リトライボタン
+    /// </summary>
     public void OnClickRetryButton() {
         if(!(GameManager.Instance.CurrentGameState == GameState.Pause || GameManager.Instance.CurrentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
@@ -517,6 +556,9 @@ public class MainManager : MonoBehaviour
         Time.timeScale = 1.0f;
     }
 
+    /// <summary>
+    /// 再開ボタン
+    /// </summary>
     public void OnClickPlayButton() {
         if(!(GameManager.Instance.CurrentGameState == GameState.Pause)) return;
         AudioManager.Instance.PlaySE("Decision");
@@ -525,6 +567,9 @@ public class MainManager : MonoBehaviour
         Time.timeScale = 1.0f;
     }
 
+    /// <summary>
+    /// ネクストステージ遷移ボタン
+    /// </summary>
     public void OnClickNextButton() {
         if(!(GameManager.Instance.CurrentGameState == GameState.Clear)) return;
         AudioManager.Instance.PlaySE("Decision");
@@ -533,6 +578,9 @@ public class MainManager : MonoBehaviour
         Init();
     }
 
+    /// <summary>
+    /// ヒントボタン
+    /// </summary>
     public void OnClickHintButton() {
         if(!(GameManager.Instance.CurrentGameState == GameState.Ready)) return;
         AudioManager.Instance.PlaySE("Decision");
@@ -541,7 +589,7 @@ public class MainManager : MonoBehaviour
         Time.timeScale = 0.0f;
     }
 
-    void ButtonHintReset() {
+    private void ButtonHintReset() {
         for(int i = 0; i < 4; i++) {
             DPadButton[i].interactable = true;
         }
@@ -564,7 +612,6 @@ public class MainManager : MonoBehaviour
         if(hintMovesStack.Count == 0) return;
         LimitDPadAction(new int[]{hintMovesStack.Peek()});
     }
-    
 
     public void OnClickHintNoButton() {
         if(!(GameManager.Instance.CurrentGameState == GameState.Pause)) return;
@@ -575,9 +622,7 @@ public class MainManager : MonoBehaviour
     }
 
 
-
-
-    // 以降チュートリアル用
+    // チュートリアル用
 
     int opeIndex = 0;
     static string message1 = "チュートリアルを始めます<>まずは雪原(白いマス)を\n移動してみましょう";

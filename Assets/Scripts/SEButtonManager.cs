@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// SEボタンを扱うクラス
+/// </summary>
 public class SEButtonManager : MonoBehaviour
 {
 

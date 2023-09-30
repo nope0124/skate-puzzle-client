@@ -4,6 +4,9 @@ using System.Collections;
 using UnityEngine.UI;
 using System.Text.RegularExpressions;
 
+/// <summary>
+/// チュートリアルメッセージを扱うクラス
+/// </summary>
 public class Message : MonoBehaviour {
 
     // メッセージUI

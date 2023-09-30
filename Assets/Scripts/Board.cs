@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 盤面を扱うクラス(現在は使っていない)
+/// </summary>
 public class Board : MonoBehaviour
 {
     // IceFloor  -> .

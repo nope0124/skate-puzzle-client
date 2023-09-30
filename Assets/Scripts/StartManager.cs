@@ -143,8 +143,6 @@ public class StartManager : MonoBehaviour
 
         // BGMの設定
         AudioManager.Instance.SetBGMAudioClip(null);
-        if(PlayerPrefs.GetInt("Version1_1", 0) == 0) ChangePlayerPrefs();
-        // if(PlayerPrefs.GetInt("v1_2", 0) == 0) ChangePlayerPrefs1_2();
     }
 
     void Update() {
@@ -207,6 +205,7 @@ public class StartManager : MonoBehaviour
     /// </summary>
     public void OnClickDataResetYesButton() {
         AudioManager.Instance.PlaySE("Decision");
+        // 全探索してデータを消去
         int stageId = 0;
         for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
             for(int tempStageId = 0; tempStageId < stageNumber; tempStageId++) {
@@ -215,6 +214,7 @@ public class StartManager : MonoBehaviour
                 stageId++;
             }
         }
+        // 最初のステージだけプレイ可能に
         PlayerPrefs.SetInt("StageScore0", 0);
         dataResetPanel.SetActive(false);
         dataResetFinishPanel.SetActive(true);
@@ -263,53 +263,4 @@ public class StartManager : MonoBehaviour
         idButtonText.text = "ID:"+PlayerPrefs.GetString("user_id");
     }
 
-
-    /// <summary>
-    /// version1.1アップデートのPlayerPrefsの修正
-    /// </summary>
-    private void ChangePlayerPrefs() {
-        PlayerPrefs.SetInt("Version1_1", 1);
-
-        List<int> _easy   = new List<int>(){ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-        List<int> _normal = new List<int>(){-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-        List<int> _hard   = new List<int>(){-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-
-        for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
-            for(int tempStageId = 0; tempStageId < stageNumber; tempStageId++) {
-                string stageNameUnlock = "UnlockStage"+tempDifficulty.ToString()+"_"+tempStageId.ToString();
-                if(PlayerPrefs.GetInt(stageNameUnlock, 0) == 0) {
-                    if(tempDifficulty == 0) _easy[tempStageId] = -1;
-                    else if(tempDifficulty == 1) _normal[tempStageId] = -1;
-                    else if(tempDifficulty == 2) _hard[tempStageId] = -1;
-                    PlayerPrefs.DeleteKey(stageNameUnlock);
-                }else {
-                    if(tempDifficulty == 0) _easy[tempStageId] = 0;
-                    else if(tempDifficulty == 1) _normal[tempStageId] = 0;
-                    else if(tempDifficulty == 2) _hard[tempStageId] = 0;
-                    PlayerPrefs.DeleteKey(stageNameUnlock);
-                }
-            }
-        }
-
-        for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
-            for(int tempStageId = 0; tempStageId < stageNumber; tempStageId++) {
-                string stageName = "StageScore"+tempDifficulty.ToString()+"_"+tempStageId.ToString();
-                if(tempDifficulty == 0) _easy[tempStageId] = Mathf.Max(_easy[tempStageId], PlayerPrefs.GetInt(stageName, -1));
-                else if(tempDifficulty == 1) _normal[tempStageId] = Mathf.Max(_normal[tempStageId], PlayerPrefs.GetInt(stageName, -1));
-                else if(tempDifficulty == 2) _hard[tempStageId] = Mathf.Max(_hard[tempStageId], PlayerPrefs.GetInt(stageName, -1));
-                PlayerPrefs.DeleteKey(stageName);
-            }
-        }
-
-        _easy[0] = Mathf.Max(0, _easy[0]);
-
-        for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
-            for(int tempStageId = 0; tempStageId < stageNumber; tempStageId++) {
-                string stageName = "StageScore"+tempDifficulty.ToString()+"_"+tempStageId.ToString();
-                if(tempDifficulty == 0) PlayerPrefs.SetInt(stageName, _easy[tempStageId]);
-                else if(tempDifficulty == 1) PlayerPrefs.SetInt(stageName, _normal[tempStageId]);
-                else if(tempDifficulty == 2) PlayerPrefs.SetInt(stageName, _hard[tempStageId]);
-            }
-        }
-    }
 }

@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// ステージセレクトボタンを扱うクラス
+/// </summary>
 public class ButtonManager : MonoBehaviour
 {
     private void Start()

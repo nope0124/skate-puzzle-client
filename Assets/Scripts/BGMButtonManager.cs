@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// BGMボタンを扱うクラス
+/// </summary>
 public class BGMButtonManager : MonoBehaviour
 {
 

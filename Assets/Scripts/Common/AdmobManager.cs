@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using GoogleMobileAds.Api;
 
+/// <summary>
+/// 広告表示を扱うクラス
+/// </summary>
 public class AdmobManager : MonoBehaviour
 {
     

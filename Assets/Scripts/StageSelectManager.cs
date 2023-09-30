@@ -5,6 +5,9 @@ using UnityEngine.UI;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// ステージセレクト画面を扱うクラス
+/// </summary>
 public class StageSelectManager : MonoBehaviour
 {
     float EPS = 1e-5f;
@@ -52,7 +55,7 @@ public class StageSelectManager : MonoBehaviour
     [SerializeField] GameObject loading;
 
     // ステージボタンの生成
-    void GenerateStageSelectButton() {
+    private void GenerateStageSelectButton() {
         int stageId = 0;
         for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
             for(int y = 0; y < stageSelectHeightNumber; y++) {
@@ -85,7 +88,7 @@ public class StageSelectManager : MonoBehaviour
                         stageCloneChildStageButton.SetActive(false);
                     }
 
-                    // 初心者用ステージの調整
+                    // チュートリアルステージにはマークをつける
                     if(stageName == "StageScore0") stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(true);
                     else stageCloneChildStageButton.transform.Find("StageBeginnerImage").gameObject.SetActive(false);
 
@@ -99,9 +102,10 @@ public class StageSelectManager : MonoBehaviour
         loading.SetActive(false);
     }
 
-    
-    // セレクトライトの生成
-    void GenerateSelectLight() {
+    /// <summary>
+    /// セレクトライトの生成
+    /// </summary>
+    private void GenerateSelectLight() {
         for(int x = 0; x < selectLightWidthNumber; x++) {
             float selectLightClonePositionX = selectLightWidthCenter+selectLightWidth/(selectLightWidthNumber-1)*x-selectLightWidth/2.0f;
             float selectLightClonePositionY = selectLightHeightCenter;
@@ -114,9 +118,10 @@ public class StageSelectManager : MonoBehaviour
         }
     }
 
-    
-    // 選択されている難易度のステージセレクト画面を表示
-    void DisplayStageSelectByDifficulty() {
+    /// <summary>
+    /// 選択されている難易度のステージセレクト画面を表示
+    /// </summary>
+    private void DisplayStageSelectByDifficulty() {
         for(int num = 0; num < difficultyNumber; num++) {
             // 選択された難易度と同じ時Active
             if(num == currentDifficulty) {

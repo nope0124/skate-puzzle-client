@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// GameStateを扱うクラス
+/// </summary>
 public class GameManager : MonoBehaviour
 {
     private static GameObject gameManagerObject;

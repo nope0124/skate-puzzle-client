@@ -2,11 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// ソルバークラス
+/// </summary>
 public class Solver
 {
     int[] dx = {-1, 1, 0, 0};
     int[] dy = {0, 0, 1, -1};
 
+    /// <summary>
+    /// 現時点からゴールするための手順を返す
+    /// </summary>
     public Stack<int> Solve(char[][] argBoard, int sx, int sy)
     {
         int Height = argBoard.Length;
@@ -78,6 +84,9 @@ public class Solver
         return movesStack;
     }
 
+    /// <summary>
+    /// 最短手を返す
+    /// </summary>
     public int GetOptMoves(char[][] argBoard) {
         int Height = argBoard.Length;
         int Width = argBoard[0].Length;

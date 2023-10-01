@@ -583,6 +583,7 @@ public class MainManager : MonoBehaviour
     /// </summary>
     public void OnClickHintButton() {
         if(!(GameManager.Instance.CurrentGameState == GameState.Ready)) return;
+        if(isTutorial) return;
         AudioManager.Instance.PlaySE("Decision");
         GameManager.Instance.CurrentGameState = GameState.Pause;
         hintPanel.SetActive(true);

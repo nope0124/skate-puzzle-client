@@ -143,6 +143,9 @@ public class StartManager : MonoBehaviour
 
         // BGMの設定
         AudioManager.Instance.SetBGMAudioClip(null);
+
+        int tempScore = PlayerPrefs.GetInt("StageScore0", 0);
+        PlayerPrefs.SetInt("StageScore0", Mathf.Max(tempScore, 0));
     }
 
     void Update() {

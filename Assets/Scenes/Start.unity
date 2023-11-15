@@ -2095,8 +2095,6 @@ MonoBehaviour:
   idButtonText: {fileID: 570063192}
   dataResetPanel: {fileID: 66289122}
   dataResetFinishPanel: {fileID: 581333419}
-  eventSystem: {fileID: 1090606519}
-  decisionSoundEffect: {fileID: 0}
   Test: {fileID: 2139883322}
 --- !u!1 &1591150168
 GameObject:

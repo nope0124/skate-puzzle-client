@@ -27,67 +27,123 @@ public class StartManager : MonoBehaviour
     [SerializeField] GameObject dataResetFinishPanel;
     [SerializeField] GameObject Test;
 
-    [Serializable]
-    class UserSaveData : ISerializationCallbackReceiver
+    static string uid = "";
+    static string access_token = "";
+    static string client = "";
+
+
+
+    const string letters = "abcdefghijklmnopqrstuvwxyz1234567890";
+    private string generateRandomString(uint strLength)
     {
-        public List<int> easy;
-        public List<int> normal;
-        public List<int> hard;
-
-        public void OnBeforeSerialize()
+        string randStr = "";
+        for (int i = 0; i < strLength; i++)
         {
+            char randLetter = letters[Mathf.FloorToInt(UnityEngine.Random.value * letters.Length)];
+            randStr += randLetter;
         }
-
-        public void OnAfterDeserialize()
-        {
-        }
+        return randStr;
     }
 
+    string baseURL = "http://localhost:3000";
 
-
-    FirebaseAuth _auth;
-    FirebaseUser _user;
-    public FirebaseUser UserData { get { return _user; } }
-    public delegate void CreateUser(bool result);
-
-    private bool userLoginFlag = false;
-    private string userId;
-    
-
-    void Awake()
+    IEnumerator UserRegistrationCoroutine()
     {
-        // 初期化
-        _auth = FirebaseAuth.DefaultInstance;
-        // すでにユーザーが作られているのか確認
-        if (_auth.CurrentUser == null)
+        string url = baseURL + "/api/v1/auth";
+        UnityWebRequest request = UnityWebRequest.Post(url, "POST");
+
+        string email = generateRandomString(16) + "@example.com";
+        string userName = generateRandomString(16);
+        string password = generateRandomString(16);
+        string jsonBody = "{\"name\":\"" + userName + "\",\"email\":\"" + email + "\",\"password\":\"" + password + "\",\"password_confirmation\":\"" + password + "\"}";
+
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonBody);
+        request.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+
+
+        Debug.Log("呼び出し中");
+        yield return request.SendWebRequest();
+
+        if (request.isNetworkError)
         {
-            // まだユーザーができていないためユーザー作成
-            Create((result) =>
-            {
-                if (result)
-                {
-                    userLoginFlag = true;
-                    userId = _user.UserId;
-                    Debug.Log($"成功: #{userId}");
-                }
-                else
-                {
-                    Debug.Log("失敗");
-                }
-            });
+            Debug.Log(request.error);
         }
         else
         {
-            _user = _auth.CurrentUser;
-            userId = _user.UserId;
-            userLoginFlag = true;
-            Debug.Log($"ログイン中: #{_user.UserId}");
+            if(request.responseCode == 200)
+            {
+                PlayerPrefs.SetString("userName", userName);
+                PlayerPrefs.SetString("email", email);
+                PlayerPrefs.SetString("password", password);
+                Dictionary<string, string> headers = request.GetResponseHeaders();
+                uid = headers["uid"];
+                access_token = headers["access-token"];
+                client = headers["client"];
+                Debug.Log(headers["uid"]);
+                Debug.Log(headers["access-token"]);
+                Debug.Log(headers["client"]);
+                Test.SetActive(false);
+            }
         }
-
-        StartCoroutine(GetData());
     }
 
-    private string baseURL = "http://localhost:3000";
+    IEnumerator UserSessionCoroutine()
+    {
+        string url = baseURL + "/api/v1/auth/sign_in";
+        UnityWebRequest request = UnityWebRequest.Post(url, "POST");
+
+        string userName = PlayerPrefs.GetString("userName");
+        string password = PlayerPrefs.GetString("password");
+        string jsonBody = "{\"name\":\"" + userName + "\",\"password\":\"" + password + "\"}";
+
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonBody);
+        request.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+
+
+        Debug.Log("呼び出し中");
+        yield return request.SendWebRequest();
+
+        if (request.isNetworkError)
+        {
+            Debug.Log(request.error);
+        }
+        else
+        {
+            if(request.responseCode == 200)
+            {
+                Dictionary<string, string> headers = request.GetResponseHeaders();
+                uid = headers["uid"];
+                access_token = headers["access-token"];
+                client = headers["client"];
+                Debug.Log(headers["uid"]);
+                Debug.Log(headers["access-token"]);
+                Debug.Log(headers["client"]);
+                Test.SetActive(false);
+            }
+        }
+    }
+
+
+
+    void Awake()
+    {
+        string userName = PlayerPrefs.GetString("userName", "");
+        string password = PlayerPrefs.GetString("password", "");
+
+        if (userName == "")
+        {
+            StartCoroutine(UserRegistrationCoroutine());
+        }
+        else
+        {
+            StartCoroutine(UserSessionCoroutine());
+        }
+    }
+
 
     IEnumerator GetData()
     {
@@ -110,32 +166,6 @@ public class StartManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 匿名でユーザー作成
-    /// </summary>
-    public void Create(CreateUser callback)
-    {
-        _auth.SignInAnonymouslyAsync().ContinueWith(task => {
-            if (task.IsCanceled)
-            {
-                Debug.LogError("SignInAnonymouslyAsync was canceled.");
-                callback(false);
-                return;
-            }
-            if (task.IsFaulted)
-            {
-                Debug.LogError("SignInAnonymouslyAsync encountered an error: " + task.Exception);
-                callback(false);
-                return;
-            }
-
-            _user = task.Result;
-            Debug.Log($"User signed in successfully: {_user.DisplayName} ({_user.UserId})");
-            callback(true);
-        });
-    }
-
-
 
     void Start()
     {
@@ -145,41 +175,6 @@ public class StartManager : MonoBehaviour
         // BGMの設定
         AudioManager.Instance.SetBGMAudioClip(null);
         if(PlayerPrefs.GetInt("Version1_1", 0) == 0) ChangePlayerPrefs();
-        // if(PlayerPrefs.GetInt("v1_2", 0) == 0) ChangePlayerPrefs1_2();
-    }
-
-    void Update() {
-        if(userLoginFlag == true && PlayerPrefs.GetString("user_id") == "") {
-            userLoginFlag = false;
-            var saveData = new UserSaveData()
-            {
-                easy   = new List<int>(){ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-                normal = new List<int>(){-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-                hard   = new List<int>(){-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-            };
-            
-            for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
-                for(int tempStageId = 0; tempStageId < stageNumber; tempStageId++) {
-                    string stageName = "StageScore"+tempDifficulty.ToString()+"_"+tempStageId.ToString();
-                    if(tempDifficulty == 0) saveData.easy[tempStageId] = Mathf.Max(saveData.easy[tempStageId], PlayerPrefs.GetInt(stageName, -1));
-                    else if(tempDifficulty == 1) saveData.normal[tempStageId] = Mathf.Max(saveData.normal[tempStageId], PlayerPrefs.GetInt(stageName, -1));
-                    else if(tempDifficulty == 2) saveData.hard[tempStageId] = Mathf.Max(saveData.hard[tempStageId], PlayerPrefs.GetInt(stageName, -1));
-                }
-            }
-
-            FirebaseDatabase.GetInstance(Const.CO.DATABASE_URL); // データベースのURLを設定
-            DatabaseReference databaseRoot = FirebaseDatabase.DefaultInstance.RootReference; // ルートを作成
-            // 新規ユーザーIDを作成し、それをPlayerPrefsに保存
-            // string userId = databaseRoot.Child("users").Push().Key;
-            PlayerPrefs.SetString("user_id", userId);
-            DatabaseReference scoreReference = databaseRoot.Child("users").Child(userId).Child("scores");
-
-            string data = JsonUtility.ToJson(saveData);
-            scoreReference.SetRawJsonValueAsync(data);
-        }
-        // _auth.SignOut();
-        // PlayerPrefs.DeleteAll();
-
     }
 
     /// <summary>
@@ -208,34 +203,10 @@ public class StartManager : MonoBehaviour
     /// </summary>
     public void OnClickDataResetYesButton() {
         AudioManager.Instance.PlaySE("Decision");
-        for(int tempDifficulty = 0; tempDifficulty < difficultyNumber; tempDifficulty++) {
-            for(int tempStageId = 0; tempStageId < stageNumber; tempStageId++) {
-                string stageName = "StageScore" + tempDifficulty.ToString() + "_" + tempStageId.ToString();
-                PlayerPrefs.SetInt(stageName, -1);
-            }
-        }
-        PlayerPrefs.SetInt("StageScore0_0", 0);
+        
+
         dataResetPanel.SetActive(false);
         dataResetFinishPanel.SetActive(true);
-
-        string userId = PlayerPrefs.GetString("user_id");
-        if(userId != "") {
-            FirebaseDatabase.GetInstance(Const.CO.DATABASE_URL); // データベースのURLを設定
-            // FirebaseApp.DefaultInstance.SetEditorDatabaseUrl(Const.CO.DATABASE_URL); // データベースのURLを設定
-            DatabaseReference databaseRoot = FirebaseDatabase.DefaultInstance.RootReference; // ルートを作成
-            
-            DatabaseReference scoreReference = databaseRoot.Child("users").Child(userId).Child("scores");
-
-            var saveData = new UserSaveData()
-            {
-                easy   = new List<int>(){ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-                normal = new List<int>(){-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-                hard   = new List<int>(){-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-            };
-
-            string data = JsonUtility.ToJson(saveData);
-            scoreReference.SetRawJsonValueAsync(data);
-        }
     }
     
     /// <summary>
@@ -259,7 +230,7 @@ public class StartManager : MonoBehaviour
     /// </summary>
     public void IDDisplayButton() {
         idButton.interactable = false;
-        idButtonText.text = "ID:"+PlayerPrefs.GetString("user_id");
+        idButtonText.text = "ID:"+PlayerPrefs.GetString("userName");
     }
 
 

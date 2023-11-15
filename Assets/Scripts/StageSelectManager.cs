@@ -156,7 +156,7 @@ public class StageSelectManager : MonoBehaviour
     IEnumerator GetUserData()
     {
         Test.SetActive(true);
-        string url = baseURL + "/api/v1/users/1";
+        string url = baseURL + "/api/v1/users/" + PlayerPrefs.GetString("userName");
         UnityWebRequest request = UnityWebRequest.Get(url);
         yield return request.SendWebRequest();
 

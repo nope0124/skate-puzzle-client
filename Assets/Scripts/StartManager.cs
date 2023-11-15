@@ -127,29 +127,22 @@ public class StartManager : MonoBehaviour
         }
     }
 
-
-
-    void Awake()
+    IEnumerator CreateFirstUserStageProgressCoroutine()
     {
-        string userName = PlayerPrefs.GetString("userName", "");
-        string password = PlayerPrefs.GetString("password", "");
+        string url = baseURL + "/api/v1/stages/1/user_stage_progresses";
+        UnityWebRequest request = UnityWebRequest.Post(url, "POST");
 
-        if (userName == "")
-        {
-            StartCoroutine(UserRegistrationCoroutine());
-        }
-        else
-        {
-            StartCoroutine(UserSessionCoroutine());
-        }
-    }
+        string jsonBody = "{\"name\":\"name\"}";
 
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonBody);
+        request.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
 
-    IEnumerator GetData()
-    {
-        string url = baseURL + "/stages/1";
-        UnityWebRequest request = UnityWebRequest.Get(url);
-        Debug.Log("呼び出し中");
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.SetRequestHeader("uid", uid);
+        request.SetRequestHeader("access-token", access_token);
+        request.SetRequestHeader("client", client);
+
+        Debug.Log("呼び出し中StageProgress");
         yield return request.SendWebRequest();
 
         if (request.isNetworkError)
@@ -160,9 +153,55 @@ public class StartManager : MonoBehaviour
         {
             if(request.responseCode == 200)
             {
-                Debug.Log("OK");
                 Test.SetActive(false);
             }
+        }
+    }
+
+    IEnumerator DeleteAllUserStageProgressCoroutine()
+    {
+        string url = baseURL + "/api/v1/stages/1/user_stage_progresses";
+        UnityWebRequest request = UnityWebRequest.Delete(url);
+
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.SetRequestHeader("uid", uid);
+        request.SetRequestHeader("access-token", access_token);
+        request.SetRequestHeader("client", client);
+
+        Debug.Log("呼び出し中StageProgress");
+        yield return request.SendWebRequest();
+
+        if (request.isNetworkError)
+        {
+            Debug.Log(request.error);
+        }
+        else
+        {
+            if(request.responseCode == 200)
+            {
+                Test.SetActive(false);
+            }
+        }
+    }
+
+
+
+
+
+
+    void Awake()
+    {
+        string userName = PlayerPrefs.GetString("userName", "");
+        string password = PlayerPrefs.GetString("password", "");
+
+        if (userName == "")
+        {
+            StartCoroutine(UserRegistrationCoroutine());
+            StartCoroutine(CreateFirstUserStageProgressCoroutine());
+        }
+        else
+        {
+            StartCoroutine(UserSessionCoroutine());
         }
     }
 
@@ -203,8 +242,9 @@ public class StartManager : MonoBehaviour
     /// </summary>
     public void OnClickDataResetYesButton() {
         AudioManager.Instance.PlaySE("Decision");
-        
 
+        StartCoroutine(DeleteAllUserStageProgressCoroutine());
+        StartCoroutine(CreateFirstUserStageProgressCoroutine());
         dataResetPanel.SetActive(false);
         dataResetFinishPanel.SetActive(true);
     }

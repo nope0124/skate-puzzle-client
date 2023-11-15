@@ -14,7 +14,7 @@ public class ButtonManager : MonoBehaviour
     private void OnClickStageSelectButton()
     {
         AudioManager.Instance.PlaySE("Decision");
-        MainManager.Instance.CurrentStageId = int.Parse(transform.Find("StageIdText").GetComponent<Text>().text);
+        new MainManager().CurrentStageId = int.Parse(transform.Find("StageIdText").GetComponent<Text>().text);
         AdmobManager.Instance.DestroyDefaultBanner();
         FadeManager.Instance.LoadScene(0.5f, "Main");
     }

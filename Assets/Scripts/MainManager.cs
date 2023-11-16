@@ -29,6 +29,10 @@ public class MainManager : MonoBehaviour
         }
     }
 
+    static string uid = "";
+    static string access_token = "";
+    static string client = "";
+
     private string baseURL = "http://localhost:3000";
     int[] dx = {-1, 1, 0, 0};
     int[] dy = {0, 0, 1, -1};
@@ -357,6 +361,37 @@ public class MainManager : MonoBehaviour
         clearPanel.SetActive(false);
     }
 
+    IEnumerator CreateUserStageProgressCoroutine(int stageId, int score)
+    {
+        string url = baseURL + "/api/v1/stages/" + stageId.ToString() + "/user_stage_progresses";
+        UnityWebRequest request = UnityWebRequest.Post(url, "POST");
+
+        string jsonBody = "{\"progress\":\"" + score.ToString() + "\"}";
+
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonBody);
+        request.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
+
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.SetRequestHeader("uid", new StartManager().Uid);
+        request.SetRequestHeader("access-token", new StartManager().AccessToken);
+        request.SetRequestHeader("client", new StartManager().Client);
+
+        Debug.Log("呼び出し中StageProgress");
+        yield return request.SendWebRequest();
+
+        if (request.isNetworkError)
+        {
+            Debug.Log(request.error);
+        }
+        else
+        {
+            if(request.responseCode == 200)
+            {
+                Test.SetActive(false);
+            }
+        }
+    }
+
 
     void saveData() {
         string stageName = "StageScore" + currentStageId.ToString();
@@ -364,48 +399,21 @@ public class MainManager : MonoBehaviour
         int tempScore = PlayerPrefs.GetInt(stageName, 0);
         int distance = new Solver().GetOptMoves(stageBoardGrid);
         string userId = PlayerPrefs.GetString("user_id");
-        if(userId == "") {
-            if(turnCount <= distance || isTutorial) {
-                AudioManager.Instance.PlaySE("Clear");
-                clearScore[0].interactable = true;
-                clearScore[1].interactable = true;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
-            }else if(turnCount <= distance*2) {
-                clearScore[0].interactable = true;
-                clearScore[1].interactable = false;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
-            }else {
-                clearScore[0].interactable = false;
-                clearScore[1].interactable = false;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
-            }
+        if(turnCount <= distance || isTutorial) {
+            AudioManager.Instance.PlaySE("Clear");
+            clearScore[0].interactable = true;
+            clearScore[1].interactable = true;
+            StartCoroutine(CreateUserStageProgressCoroutine(currentStageId + 1, 3));
+        }else if(turnCount <= distance*2) {
+            clearScore[0].interactable = true;
+            clearScore[1].interactable = false;
+            StartCoroutine(CreateUserStageProgressCoroutine(currentStageId + 1, 2));
         }else {
-            FirebaseDatabase.GetInstance(Const.CO.DATABASE_URL); // データベースのURLを設定
-            DatabaseReference databaseRoot = FirebaseDatabase.DefaultInstance.RootReference; // ルートを作成
-            DatabaseReference scoreReference = databaseRoot.Child("users").Child(userId).Child("scores");
-            Dictionary<string, object> childUpdates = new Dictionary<string, object>();
-            difficultyName = new string[]{"easy", "normal", "hard"};
-            if(turnCount <= distance || isTutorial) {
-                AudioManager.Instance.PlaySE("Clear");
-                clearScore[0].interactable = true;
-                clearScore[1].interactable = true;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 3));
-            }else if(turnCount <= distance*2) {
-                clearScore[0].interactable = true;
-                clearScore[1].interactable = false;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 2));
-            }else {
-                clearScore[0].interactable = false;
-                clearScore[1].interactable = false;
-                PlayerPrefs.SetInt(stageName, Mathf.Max(tempScore, 1));
-            }
-            // childUpdates["/"+difficultyName[currentDifficulty]+"/"+currentStageId.ToString()] = PlayerPrefs.GetInt(stageName);
-            // if((currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber < 2) {
-            //     PlayerPrefs.SetInt(stageNameUnlock, Mathf.Max(0, PlayerPrefs.GetInt(stageNameUnlock)));
-            //     childUpdates["/"+difficultyName[(currentDifficulty + (currentStageId+1)/stageNumber) % difficultyNumber]+"/"+((currentStageId+1) % stageNumber).ToString()] = PlayerPrefs.GetInt(stageNameUnlock);
-            // }
-            // scoreReference.UpdateChildrenAsync(childUpdates);
+            clearScore[0].interactable = false;
+            clearScore[1].interactable = false;
+            StartCoroutine(CreateUserStageProgressCoroutine(currentStageId + 1, 1));
         }
+        StartCoroutine(CreateUserStageProgressCoroutine((currentStageId + 1) % stageNumber + 1, 0));
     }
 
     void Start()

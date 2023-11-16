@@ -32,6 +32,25 @@ public class StartManager : MonoBehaviour
     static string client = "";
 
 
+    public string Uid
+    {
+        get { return uid; }
+        set { uid = value; }
+    }
+
+    public string AccessToken
+    {
+        get { return access_token; }
+        set { access_token = value; }
+    }
+
+    public string Client
+    {
+        get { return client; }
+        set { client = value; }
+    }
+
+
 
     const string letters = "abcdefghijklmnopqrstuvwxyz1234567890";
     private string generateRandomString(uint strLength)
@@ -244,7 +263,6 @@ public class StartManager : MonoBehaviour
         AudioManager.Instance.PlaySE("Decision");
 
         StartCoroutine(DeleteAllUserStageProgressCoroutine());
-        StartCoroutine(CreateFirstUserStageProgressCoroutine());
         dataResetPanel.SetActive(false);
         dataResetFinishPanel.SetActive(true);
     }
